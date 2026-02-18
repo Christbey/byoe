@@ -24,8 +24,7 @@ class ServiceRequestController extends Controller
     public function __construct(
         protected CreateServiceRequestAction $createServiceRequestAction,
         protected StripeService $stripeService,
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of the resource.
@@ -41,13 +40,20 @@ class ServiceRequestController extends Controller
         $tab = $request->query('tab', 'requests');
         $filter = $request->query('filter', 'all');
 
+        if (! $shop) {
+            return Inertia::render('shop/ServiceRequests', [
+                'tab' => $tab,
+                'filter' => $filter,
+                'requests' => null,
+                'bookings' => null,
+            ]);
+        }
+
         if ($tab === 'bookings') {
-            $locationIds = $shop ? $shop->locations()->pluck('id') : collect();
+            $locationIds = $shop->locations()->pluck('id');
 
             $query = Booking::with(['serviceRequest.shopLocation', 'provider.user'])
-                ->when($locationIds->isNotEmpty(), function ($q) use ($locationIds) {
-                    $q->whereHas('serviceRequest', fn ($q2) => $q2->whereIn('shop_location_id', $locationIds));
-                });
+                ->whereHas('serviceRequest', fn ($q) => $q->whereIn('shop_location_id', $locationIds));
 
             match ($filter) {
                 'active' => $query->whereIn('status', ['pending', 'confirmed', 'in_progress']),
@@ -56,19 +62,17 @@ class ServiceRequestController extends Controller
                 default => null,
             };
 
-            $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
-
             return Inertia::render('shop/ServiceRequests', [
                 'tab' => 'bookings',
                 'filter' => $filter,
                 'requests' => null,
-                'bookings' => $bookings,
+                'bookings' => $query->orderBy('created_at', 'desc')->paginate(15),
             ]);
         }
 
         $query = ServiceRequest::query()
             ->with(['shopLocation', 'booking'])
-            ->when($shop, fn ($q) => $q->whereHas('shopLocation', fn ($q2) => $q2->where('shop_id', $shop->id)))
+            ->whereHas('shopLocation', fn ($q) => $q->where('shop_id', $shop->id))
             ->when($filter !== 'all', fn ($q) => $q->where('status', $filter))
             ->orderBy('created_at', 'desc');
 
