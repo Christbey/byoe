@@ -11,12 +11,25 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
-const selectedRole = ref<'shop_owner' | 'provider' | null>(null);
+const props = withDefaults(defineProps<{ preselectedRole?: string | null }>(), {
+    preselectedRole: null,
+});
+
+const selectedRole = ref<'shop_owner' | 'provider' | null>(
+    props.preselectedRole === 'shop_owner' || props.preselectedRole === 'provider'
+        ? props.preselectedRole
+        : null,
+);
+
+const roleLabels: Record<string, string> = {
+    shop_owner: '🏪 Shop Owner',
+    provider: '💼 Contractor',
+};
 </script>
 
 <template>
     <AuthBase
-        title="Create an account"
+        :title="selectedRole ? `Create your ${selectedRole === 'shop_owner' ? 'shop' : 'contractor'} account` : 'Create an account'"
         description="Enter your details below to create your account"
     >
         <Head title="Register" />
@@ -27,17 +40,16 @@ const selectedRole = ref<'shop_owner' | 'provider' | null>(null);
             v-slot="{ errors, processing }"
             class="flex flex-col gap-6"
         >
-            <!-- Role selection -->
-            <div class="grid gap-2">
+            <!-- Role hidden when pre-selected from landing page -->
+            <input v-if="selectedRole" type="hidden" name="role" :value="selectedRole" />
+
+            <!-- Role picker shown when arriving at /register directly -->
+            <div v-else class="grid gap-2">
                 <Label>I am registering as a…</Label>
                 <div class="grid grid-cols-2 gap-3">
                     <label
                         class="flex cursor-pointer flex-col gap-1.5 rounded-lg border p-4 transition-colors"
-                        :class="
-                            selectedRole === 'shop_owner'
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/50'
-                        "
+                        :class="selectedRole === 'shop_owner' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'"
                     >
                         <input
                             type="radio"
@@ -48,18 +60,12 @@ const selectedRole = ref<'shop_owner' | 'provider' | null>(null);
                         />
                         <span class="text-lg">🏪</span>
                         <span class="text-sm font-semibold">Shop Owner</span>
-                        <span class="text-xs text-muted-foreground leading-snug">
-                            I need to hire contractors for shifts
-                        </span>
+                        <span class="text-xs text-muted-foreground leading-snug">I need to hire contractors for shifts</span>
                     </label>
 
                     <label
                         class="flex cursor-pointer flex-col gap-1.5 rounded-lg border p-4 transition-colors"
-                        :class="
-                            selectedRole === 'provider'
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/50'
-                        "
+                        :class="selectedRole === 'provider' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'"
                     >
                         <input
                             type="radio"
@@ -70,12 +76,18 @@ const selectedRole = ref<'shop_owner' | 'provider' | null>(null);
                         />
                         <span class="text-lg">💼</span>
                         <span class="text-sm font-semibold">Contractor</span>
-                        <span class="text-xs text-muted-foreground leading-snug">
-                            I want to pick up shifts and get paid
-                        </span>
+                        <span class="text-xs text-muted-foreground leading-snug">I want to pick up shifts and get paid</span>
                     </label>
                 </div>
                 <InputError :message="errors.role" />
+            </div>
+
+            <!-- Confirmation badge when role is pre-selected -->
+            <div v-if="preselectedRole && selectedRole" class="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+                <span class="text-sm font-medium">{{ roleLabels[selectedRole] }}</span>
+                <span class="text-xs text-muted-foreground ml-auto">
+                    <a href="/register" class="underline underline-offset-2">Change</a>
+                </span>
             </div>
 
             <div class="grid gap-6">
@@ -150,12 +162,7 @@ const selectedRole = ref<'shop_owner' | 'provider' | null>(null);
 
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?
-                <TextLink
-                    :href="login()"
-                    class="underline underline-offset-4"
-                    :tabindex="6"
-                    >Log in</TextLink
-                >
+                <TextLink :href="login()" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
             </div>
         </Form>
     </AuthBase>
