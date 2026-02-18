@@ -2,9 +2,6 @@
 
 use App\Http\Controllers\Payment\CreatePaymentIntentController;
 use App\Http\Controllers\Payment\StripeWebhookController;
-use App\Http\Controllers\Provider\AcceptServiceRequestController;
-use App\Http\Controllers\Provider\ListAvailableRequestsController;
-use App\Http\Controllers\Shop\ServiceRequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -65,24 +62,8 @@ Route::prefix('v1')->group(function () {
     });
 });
 
-// ============================================================================
-// Legacy API Routes - Session-based auth (for current Inertia web app)
-// These will be deprecated once we refactor web controllers
-// ============================================================================
+// Payment routes (session auth)
 Route::middleware(['auth', 'verified'])->group(function () {
-
-    // Provider routes (Inertia web - session auth)
-    Route::prefix('provider')->name('provider.')->middleware('role:provider|admin')->group(function () {
-        Route::get('/available-requests', ListAvailableRequestsController::class)->name('available-requests');
-        Route::post('/requests/{serviceRequest}/accept', AcceptServiceRequestController::class)->name('accept-request');
-    });
-
-    // Service Request routes (Shop - Inertia web)
-    Route::prefix('service-requests')->name('service-requests.')->middleware('role:shop_owner|shop_manager|admin')->group(function () {
-        Route::post('/', [ServiceRequestController::class, 'store'])->name('create');
-    });
-
-    // Payment routes
     Route::prefix('payments')->name('payments.')->group(function () {
         Route::post('/bookings/{booking}/payment-intent', CreatePaymentIntentController::class)->name('create-intent');
     });
