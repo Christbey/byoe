@@ -153,7 +153,17 @@ onMounted(async () => {
                 const accountOnboarding = stripe.create('account-onboarding');
 
                 // When the provider finishes or exits, reload to get updated account status
-                accountOnboarding.setOnExit(() => {
+                accountOnboarding.setOnExit(async () => {
+                    // Sync account status from Stripe before reloading so
+                    // isOnboardingComplete is accurate without waiting for a webhook.
+                    try {
+                        await fetch('/provider/stripe-setup/sync', {
+                            method: 'POST',
+                            headers: { 'X-XSRF-TOKEN': xsrfToken(), Accept: 'application/json' },
+                        });
+                    } catch {
+                        // Best-effort — reload regardless
+                    }
                     router.visit('/provider/stripe-setup', { replace: true });
                 });
 

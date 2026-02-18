@@ -13,12 +13,11 @@ use App\Http\Controllers\Provider\CertificationsController;
 use App\Http\Controllers\Provider\CompleteBookingController;
 use App\Http\Controllers\Provider\DashboardController as ProviderDashboardController;
 use App\Http\Controllers\Provider\EarningsController;
-use App\Http\Controllers\Provider\PayoutController;
 use App\Http\Controllers\Provider\ProfileController as ProviderProfileController;
-use App\Http\Controllers\Provider\RatingsController;
 use App\Http\Controllers\Provider\StripeSetupController;
 use App\Http\Controllers\Provider\StripeSetupDashboardLinkController;
 use App\Http\Controllers\Provider\StripeSetupSessionController;
+use App\Http\Controllers\Provider\StripeSetupSyncController;
 use App\Http\Controllers\Shop\BookingController;
 use App\Http\Controllers\Shop\DashboardController;
 use App\Http\Controllers\Shop\LocationController;
@@ -95,6 +94,7 @@ Route::prefix('provider')->name('provider.')->middleware(['auth', 'verified', 'r
     Route::get('/stripe-setup', StripeSetupController::class)->name('stripe-setup');
     Route::post('/stripe-setup/session', StripeSetupSessionController::class)->name('stripe-setup.session');
     Route::post('/stripe-setup/dashboard-link', StripeSetupDashboardLinkController::class)->name('stripe-setup.dashboard-link');
+    Route::post('/stripe-setup/sync', StripeSetupSyncController::class)->name('stripe-setup.sync');
 });
 
 // Admin Portal
