@@ -217,7 +217,22 @@ const statusStep = (status: string) =>
             </div>
 
             <!-- ── REQUESTS TAB ── -->
-            <template v-if="tab === 'requests' && requests">
+            <template v-if="tab === 'requests'">
+                <!-- No shop profile -->
+                <Card v-if="!requests">
+                    <CardContent class="flex flex-col items-center justify-center py-12 px-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-muted-foreground mb-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016 2.993 2.993 0 002.25-1.016 3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-16.5 0h16.5" />
+                        </svg>
+                        <h3 class="text-lg font-semibold mb-2">Set up your shop profile first</h3>
+                        <p class="text-sm text-muted-foreground max-w-md mb-4">
+                            Create your shop profile before posting service requests.
+                        </p>
+                        <Button as="a" href="/shop/profile/edit">Set Up Shop Profile</Button>
+                    </CardContent>
+                </Card>
+
+                <template v-else>
                 <PageHelp storage-key="shop-service-requests" :steps="[
                     'Click \'Create Request\' to post a request for a specific shift at one of your locations.',
                     'Open requests are visible to active providers — a provider can accept it at any time.',
@@ -317,10 +332,26 @@ const statusStep = (status: string) =>
                 <div v-if="requests.data.length > 0" class="text-center text-sm text-muted-foreground pb-4">
                     Page {{ requests.current_page }} of {{ requests.last_page }}
                 </div>
+                </template>
             </template>
 
             <!-- ── BOOKINGS TAB ── -->
-            <template v-if="tab === 'bookings' && bookings">
+            <template v-if="tab === 'bookings'">
+                <!-- No shop profile -->
+                <Card v-if="!bookings">
+                    <CardContent class="flex flex-col items-center justify-center py-12 px-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-muted-foreground mb-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016 2.993 2.993 0 002.25-1.016 3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-16.5 0h16.5" />
+                        </svg>
+                        <h3 class="text-lg font-semibold mb-2">Set up your shop profile first</h3>
+                        <p class="text-sm text-muted-foreground max-w-md mb-4">
+                            Create your shop profile to start posting service requests and receiving bookings.
+                        </p>
+                        <Button as="a" href="/shop/profile/edit">Set Up Shop Profile</Button>
+                    </CardContent>
+                </Card>
+
+                <template v-else>
                 <PageHelp storage-key="shop-bookings" :steps="[
                     'Bookings are created automatically when a provider accepts one of your service requests.',
                     'A booking starts as \'Pending\' until payment is processed, then becomes \'Confirmed\'.',
@@ -462,6 +493,7 @@ const statusStep = (status: string) =>
                 <div v-if="bookings.data.length > 0" class="text-center text-sm text-muted-foreground pb-4">
                     Page {{ bookings.current_page }} of {{ bookings.last_page }}
                 </div>
+                </template>
             </template>
         </div>
     </AppLayout>
