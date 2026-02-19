@@ -48,7 +48,7 @@ class AvailableRequestsController extends Controller
         if ($filter === 'nearby') {
             [$providerLat, $providerLng, $locationSource] = $this->resolveProviderLocation($request, $provider);
 
-            if ($providerLat && $providerLng) {
+            if ($providerLat !== null && $providerLng !== null) {
                 $radiusMiles = $provider->service_area_max_miles ?: config('geo.search_radius_miles', 25);
                 $latDelta = $radiusMiles / 69.0;
                 $lngDelta = $radiusMiles / (69.0 * cos(deg2rad($providerLat)));
@@ -60,14 +60,15 @@ class AvailableRequestsController extends Controller
             }
         }
 
-        if ($filter === 'nearby' && $providerLat && $providerLng) {
+        if ($filter === 'nearby' && $providerLat !== null && $providerLng !== null) {
             $radiusMiles = $provider->service_area_max_miles ?: config('geo.search_radius_miles', 25);
             $all = $query->get()
                 ->map(function ($req) use ($providerLat, $providerLng) {
                     $loc = $req->shopLocation;
-                    $req->distance = ($loc?->latitude && $loc?->longitude)
+                    $distance = ($loc?->latitude !== null && $loc?->longitude !== null)
                         ? $this->geocodingService->calculateDistance($providerLat, $providerLng, $loc->latitude, $loc->longitude)
                         : null;
+                    $req->setAttribute('distance', $distance);
 
                     return $req;
                 })
