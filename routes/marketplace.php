@@ -22,7 +22,6 @@ use App\Http\Controllers\Shop\BookingController;
 use App\Http\Controllers\Shop\DashboardController;
 use App\Http\Controllers\Shop\LocationController;
 use App\Http\Controllers\Shop\PaymentController;
-use App\Http\Controllers\Shop\PaymentMethodController;
 use App\Http\Controllers\Shop\PaymentMethodSaveController;
 use App\Http\Controllers\Shop\ServiceRequestController;
 use App\Http\Controllers\Shop\ShopController;
@@ -44,8 +43,9 @@ Route::prefix('shop')->name('shop.')->middleware(['auth', 'verified', 'role:shop
     Route::get('/profile/edit', [ShopController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ShopController::class, 'update'])->name('profile.update');
 
-    // Locations Resource
-    Route::resource('locations', LocationController::class);
+    // Locations Resource — index redirects to profile locations tab
+    Route::get('/locations', fn () => redirect()->route('shop.profile', ['tab' => 'locations']))->name('locations');
+    Route::resource('locations', LocationController::class)->except(['index']);
 
     // Service Requests Resource
     Route::resource('service-requests', ServiceRequestController::class)->except(['edit', 'update']);
@@ -61,8 +61,8 @@ Route::prefix('shop')->name('shop.')->middleware(['auth', 'verified', 'role:shop
     Route::resource('payments', PaymentController::class)->only(['index']);
     Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
 
-    // Payment Method Management
-    Route::get('/payment', PaymentMethodController::class)->name('payment');
+    // Payment Method Management — page redirects to payments method tab
+    Route::get('/payment', fn () => redirect()->route('shop.payments.index', ['tab' => 'method']))->name('payment');
     Route::post('/payment/save', PaymentMethodSaveController::class)->name('payment.save');
 });
 

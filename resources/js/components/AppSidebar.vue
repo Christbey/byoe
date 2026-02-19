@@ -10,13 +10,11 @@ import {
     FileText,
     Folder,
     LayoutGrid,
-    MapPin,
     Settings,
     ShieldAlert,
     TrendingUp,
     User,
     Users,
-    Wallet,
 } from 'lucide-vue-next';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -64,11 +62,6 @@ const mainNavItems = computed<NavItem[]>(() => {
                 icon: Building2,
             },
             {
-                title: 'Locations',
-                href: '/shop/locations',
-                icon: MapPin,
-            },
-            {
                 title: 'Service Requests',
                 href: '/shop/service-requests',
                 icon: Briefcase,
@@ -77,11 +70,6 @@ const mainNavItems = computed<NavItem[]>(() => {
                 title: 'Payments',
                 href: '/shop/payments',
                 icon: CreditCard,
-            },
-            {
-                title: 'Payment Method',
-                href: '/shop/payment',
-                icon: Wallet,
             }
         );
     }

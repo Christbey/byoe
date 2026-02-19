@@ -6,18 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\Shop;
+use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
 class PaymentController extends Controller
 {
+    public function __construct(
+        protected StripeService $stripeService
+    ) {}
+
     /**
-     * Display a listing of the resource.
+     * Display payments history and payment method management in a tabbed view.
      */
     public function index(Request $request): InertiaResponse
     {
+        $tab = $request->query('tab', 'history');
+
         // Get the authenticated user's shop
         $shop = $request->user()->shop;
 
@@ -28,6 +36,7 @@ class PaymentController extends Controller
 
         if (! $shop) {
             return Inertia::render('shop/Payments', [
+                'tab' => $tab,
                 'payments' => [
                     'data' => [],
                     'current_page' => 1,
@@ -36,6 +45,9 @@ class PaymentController extends Controller
                 ],
                 'pendingAuthorizations' => [],
                 'filter' => 'all',
+                'clientSecret' => null,
+                'savedCard' => null,
+                'stripePublishableKey' => null,
             ]);
         }
 
@@ -69,10 +81,54 @@ class PaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get(['id', 'title', 'price', 'stripe_payment_intent_id', 'created_at']);
 
+        // Payment method data — only fetched when the method tab is active
+        $clientSecret = null;
+        $savedCard = null;
+        $stripePublishableKey = null;
+
+        if ($tab === 'method') {
+            $stripePublishableKey = config('stripe.publishable_key');
+
+            if ($shop->stripe_payment_method_id) {
+                try {
+                    \Stripe\Stripe::setApiKey(config('stripe.secret_key'));
+                    $pm = \Stripe\PaymentMethod::retrieve($shop->stripe_payment_method_id);
+
+                    if ($pm->card) {
+                        $savedCard = [
+                            'brand' => $pm->card->brand,
+                            'last4' => $pm->card->last4,
+                            'exp_month' => $pm->card->exp_month,
+                            'exp_year' => $pm->card->exp_year,
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to retrieve saved payment method for shop', [
+                        'shop_id' => $shop->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $shop->update(['stripe_payment_method_id' => null]);
+                }
+            }
+
+            try {
+                $clientSecret = $this->stripeService->createShopSetupIntent($shop);
+            } catch (\Exception $e) {
+                Log::error('Failed to create SetupIntent for shop', [
+                    'shop_id' => $shop->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return Inertia::render('shop/Payments', [
+            'tab' => $tab,
             'payments' => $payments,
             'pendingAuthorizations' => $pendingAuthorizations,
             'filter' => $filter,
+            'clientSecret' => $clientSecret,
+            'savedCard' => $savedCard,
+            'stripePublishableKey' => $stripePublishableKey,
         ]);
     }
 
@@ -151,7 +207,7 @@ class PaymentController extends Controller
         $receipt .= "Receipt #: {$payment->id}\n";
         $receipt .= "Date: {$payment->created_at->format('F d, Y')}\n\n";
         $receipt .= "Service: {$payment->booking->serviceRequest->title}\n";
-        $receipt .= "Amount: $".number_format($payment->amount / 100, 2)."\n";
+        $receipt .= 'Amount: $'.number_format($payment->amount / 100, 2)."\n";
         $receipt .= "Status: {$payment->status}\n\n";
         $receipt .= "Thank you for your business!\n";
 

@@ -14,14 +14,21 @@ use Inertia\Response;
 class ShopController extends Controller
 {
     /**
-     * Show the shop profile (read-only).
+     * Show the shop profile with tabs for profile details and locations.
      */
     public function show(Request $request): Response
     {
         $shop = $this->resolveShop($request);
+        $tab = $request->query('tab', 'profile');
+
+        $locations = $shop->id
+            ? $shop->locations()->orderBy('is_primary', 'desc')->orderBy('created_at', 'asc')->get()
+            : collect();
 
         return Inertia::render('shop/ShowProfile', [
             'shop' => $shop,
+            'tab' => $tab,
+            'locations' => $locations,
         ]);
     }
 
