@@ -19,8 +19,7 @@ class LocationController extends Controller
      */
     public function __construct(
         protected GeocodingService $geocodingService
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of the resource.
@@ -103,7 +102,7 @@ class LocationController extends Controller
         // Attempt to geocode the location immediately
         $this->geocodingService->geocodeLocation($location);
 
-        return redirect()->route('shop.locations.index')
+        return redirect()->route('shop.profile', ['tab' => 'locations'])
             ->with('success', 'Location created successfully!');
     }
 
@@ -112,8 +111,8 @@ class LocationController extends Controller
      */
     public function show(string $id)
     {
-        // Not needed for locations - redirect to index
-        return redirect()->route('shop.locations.index');
+        // Not needed for locations - redirect to profile locations tab
+        return redirect()->route('shop.profile', ['tab' => 'locations']);
     }
 
     /**
@@ -182,7 +181,7 @@ class LocationController extends Controller
             $this->geocodingService->geocodeLocation($location);
         }
 
-        return redirect()->route('shop.locations.index')
+        return redirect()->route('shop.profile', ['tab' => 'locations'])
             ->with('success', 'Location updated successfully!');
     }
 
@@ -216,7 +215,7 @@ class LocationController extends Controller
         // Delete the location
         $location->delete();
 
-        return redirect()->route('shop.locations.index')
+        return redirect()->route('shop.profile', ['tab' => 'locations'])
             ->with('success', 'Location deleted successfully!');
     }
 }

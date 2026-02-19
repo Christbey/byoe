@@ -27,8 +27,8 @@ interface Props {
     locations: ShopLocation[];
     skills: string[];
     templates: ServiceTemplate[];
-    minimumWages: Record<string, number>;
-    federalMinimumWage: number;
+    hourlyRate: number;
+    platformFeePercentage: number;
 }
 
 const props = defineProps<Props>();
@@ -48,7 +48,6 @@ const form = useForm({
     service_date: '',
     start_time: '',
     end_time: '',
-    price: '',
 });
 
 // — Template picker —
@@ -99,6 +98,10 @@ const durationOptions = [
 
 const selectedDuration = ref<number | null>(null);
 
+const setDuration = (value: number) => {
+    selectedDuration.value = value;
+};
+
 // Recompute end_time whenever start or duration changes
 watch([() => form.start_time, () => form.service_date, selectedDuration], () => {
     if (!form.start_time || !selectedDuration.value) {
@@ -112,34 +115,18 @@ watch([() => form.start_time, () => form.service_date, selectedDuration], () => 
     form.end_time = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
 });
 
-// — Location & minimum wage —
-const selectedLocation = computed(() =>
-    props.locations.find((loc) => loc.id === form.shop_location_id),
-);
-
-const locationState = computed(() => selectedLocation.value?.state?.toUpperCase() ?? '');
-
-const minimumHourlyWage = computed(() => {
-    if (!locationState.value) return props.federalMinimumWage;
-    return props.minimumWages[locationState.value] ?? props.federalMinimumWage;
-});
-
-// — Minimum price based on duration —
-const minimumPrice = computed(() => {
+// — Pricing (flat rate, calculated from duration) —
+const servicePrice = computed(() => {
     if (!selectedDuration.value) return 0;
-    return Math.ceil(minimumHourlyWage.value * selectedDuration.value * 100) / 100;
+    return Math.round(props.hourlyRate * selectedDuration.value * 100) / 100;
 });
 
-const priceBelowMinimum = computed(() => {
-    if (!form.price || minimumPrice.value <= 0) return false;
-    return parseFloat(form.price) < minimumPrice.value;
+const platformFee = computed(() => {
+    return Math.round(servicePrice.value * (props.platformFeePercentage / 100) * 100) / 100;
 });
 
-// Auto-set price to minimum when duration or location changes
-watch(minimumPrice, (newMin) => {
-    if (newMin > 0 && (!form.price || parseFloat(form.price) < newMin)) {
-        form.price = newMin.toFixed(2);
-    }
+const providerPayout = computed(() => {
+    return Math.round((servicePrice.value - platformFee.value) * 100) / 100;
 });
 
 // — Dates —
@@ -154,14 +141,19 @@ const displayEndTime = computed(() => {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 });
 
+const isOvernight = computed(() => {
+    if (!form.start_time || !selectedDuration.value) return false;
+    const [hours, minutes] = form.start_time.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + selectedDuration.value * 60;
+    return totalMinutes >= 24 * 60;
+});
+
 const canSubmit = computed(() =>
     selectedTemplate.value !== null &&
     form.shop_location_id &&
     form.service_date &&
     form.start_time &&
-    selectedDuration.value &&
-    form.price &&
-    !priceBelowMinimum.value,
+    selectedDuration.value !== null,
 );
 
 const handleSubmit = () => {
@@ -185,7 +177,7 @@ const handleSubmit = () => {
             <div class="space-y-1">
                 <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Create Service Request</h1>
                 <p class="text-sm text-muted-foreground">Post a shift to find qualified workers for your location.</p>
-                <PageHelp storage-key="shop-create-request" :steps="['Choose a request type (template) that describes the role you need filled.', 'Select which of your locations the shift is at, then add any specific skills required.', 'Pick the date, start time, and shift duration — the end time is calculated for you.', 'Set the total pay for the shift. The minimum wage floor for your state is enforced automatically.', 'Once posted, the request goes live immediately and providers can accept it.']" />
+                <PageHelp storage-key="shop-create-request" :steps="['Choose a request type (template) that describes the role you need filled.', 'Select which of your locations the shift is at, then add any specific skills required.', 'Pick the date, start time, and shift duration — the end time is calculated for you.', 'Pricing is automatically set at $20/hr. Review the breakdown before submitting.', 'Once posted, the request goes live and providers can accept it.']" />
             </div>
 
             <!-- Step 1: Template Picker -->
@@ -327,7 +319,7 @@ const handleSubmit = () => {
                                 v-for="opt in durationOptions"
                                 :key="opt.value"
                                 type="button"
-                                @click="selectedDuration = opt.value"
+                                @click="setDuration(opt.value)"
                                 class="rounded-md border px-3 py-1.5 text-sm font-medium transition-colors"
                                 :class="selectedDuration === opt.value
                                     ? 'border-primary bg-primary text-primary-foreground'
@@ -337,67 +329,49 @@ const handleSubmit = () => {
                             </button>
                         </div>
                         <p v-if="form.end_time && displayEndTime" class="text-sm text-muted-foreground">
-                            Shift ends at <span class="font-medium text-foreground">{{ displayEndTime }}</span>
+                            Shift ends at <span class="font-medium text-foreground">{{ displayEndTime }}</span><span v-if="isOvernight" class="text-amber-600 dark:text-amber-400"> (next day)</span>
                         </p>
                         <p v-if="form.errors.end_time" class="text-sm text-destructive">{{ form.errors.end_time }}</p>
                     </div>
                 </div>
 
-                <!-- Step 5: Price -->
+                <!-- Step 5: Pricing Summary -->
                 <div class="space-y-3">
                     <div class="flex items-center gap-2">
                         <span class="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">5</span>
-                        <h2 class="font-semibold">Service Price</h2>
+                        <h2 class="font-semibold">Pricing Summary</h2>
                     </div>
 
-                    <!-- Shift cost summary -->
-                    <div v-if="selectedDuration && locationState" class="rounded-lg bg-muted px-4 py-3 text-sm space-y-0.5">
+                    <div v-if="selectedDuration" class="rounded-lg border bg-card p-4 space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-muted-foreground">{{ locationState }} minimum wage</span>
-                            <span class="font-medium">${{ minimumHourlyWage.toFixed(2) }}/hr</span>
+                            <span class="text-muted-foreground">Rate</span>
+                            <span class="font-medium">${{ props.hourlyRate.toFixed(2) }}/hr</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-muted-foreground">Shift length</span>
+                            <span class="text-muted-foreground">Duration</span>
                             <span class="font-medium">{{ selectedDuration }}h</span>
                         </div>
-                        <div class="flex justify-between border-t border-border/50 pt-1.5 mt-1.5">
-                            <span class="text-muted-foreground">Minimum total</span>
-                            <span class="font-semibold text-foreground">${{ minimumPrice.toFixed(2) }}</span>
+                        <div class="flex justify-between border-t border-border pt-2 mt-1">
+                            <span class="text-muted-foreground">Service total</span>
+                            <span class="font-semibold">${{ servicePrice.toFixed(2) }}</span>
+                        </div>
+                        <div class="flex justify-between text-muted-foreground">
+                            <span>Platform fee ({{ props.platformFeePercentage }}%)</span>
+                            <span>-${{ platformFee.toFixed(2) }}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-border pt-2 mt-1 font-semibold">
+                            <span>Provider receives</span>
+                            <span class="text-emerald-600 dark:text-emerald-400">${{ providerPayout.toFixed(2) }}</span>
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <Label for="price">
-                            Amount to Pay Provider
-                            <span v-if="minimumPrice > 0" class="ml-1 text-xs text-muted-foreground font-normal">
-                                (min ${{ minimumPrice.toFixed(2) }})
-                            </span>
-                        </Label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                            <Input
-                                id="price"
-                                v-model="form.price"
-                                type="number"
-                                required
-                                :min="minimumPrice > 0 ? minimumPrice : 0"
-                                step="0.01"
-                                placeholder="0.00"
-                                class="pl-7"
-                                :class="{ 'border-destructive focus-visible:ring-destructive/50': priceBelowMinimum }"
-                            />
-                        </div>
-                        <div v-if="priceBelowMinimum" class="flex items-center gap-1.5 text-sm text-destructive">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0">
-                                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                            </svg>
-                            Price cannot be below the {{ locationState }} minimum wage floor of ${{ minimumPrice.toFixed(2) }}.
-                        </div>
-                        <p v-else-if="form.errors.price" class="text-sm text-destructive">{{ form.errors.price }}</p>
-                        <p class="text-xs text-muted-foreground">
-                            A 15% platform fee is deducted — provider receives the remainder.
-                        </p>
+                    <div v-else class="rounded-lg border border-dashed bg-muted/40 px-4 py-5 text-center text-sm text-muted-foreground">
+                        Select a duration above to see pricing.
                     </div>
+
+                    <p class="text-xs text-muted-foreground">
+                        Pricing is set at a flat ${{ props.hourlyRate.toFixed(2) }}/hr. You'll be charged ${{ servicePrice.toFixed(2) }} — the provider receives ${{ providerPayout.toFixed(2) }} after the {{ props.platformFeePercentage }}% platform fee.
+                    </p>
                 </div>
 
                 <!-- Submit -->

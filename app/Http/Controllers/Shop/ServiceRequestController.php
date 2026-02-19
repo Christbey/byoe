@@ -122,8 +122,8 @@ class ServiceRequestController extends Controller
             'locations' => $locations,
             'skills' => $skills,
             'templates' => $templates,
-            'minimumWages' => config('minimum_wage.by_state'),
-            'federalMinimumWage' => config('minimum_wage.federal'),
+            'hourlyRate' => config('marketplace.hourly_rate'),
+            'platformFeePercentage' => config('marketplace.platform_fee_percentage'),
         ]);
     }
 
@@ -140,8 +140,7 @@ class ServiceRequestController extends Controller
             'skills_required' => ['nullable', 'array'],
             'service_date' => ['required', 'date', 'after:today'],
             'start_time' => ['required', 'date_format:H:i'],
-            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'end_time' => ['required', 'date_format:H:i'],
         ]);
 
         if ($validator->fails()) {
@@ -163,23 +162,29 @@ class ServiceRequestController extends Controller
                 ->withInput();
         }
 
-        // Enforce minimum wage floor based on location's state
-        $state = strtoupper($shopLocation->state);
-        $hourlyMin = config("minimum_wage.by_state.{$state}", config('minimum_wage.federal'));
-        $startCarbon = \Carbon\Carbon::parse($validated['service_date'].' '.$validated['start_time']);
-        $endCarbon = \Carbon\Carbon::parse($validated['service_date'].' '.$validated['end_time']);
-        $hours = $startCarbon->diffInMinutes($endCarbon) / 60;
-        $minimumPrice = round($hourlyMin * $hours, 2);
-
-        if ((float) $validated['price'] < $minimumPrice) {
+        // Reject same start and end time
+        if ($validated['start_time'] === $validated['end_time']) {
             return redirect()->back()
-                ->withErrors(['price' => "Price cannot be below the {$state} minimum wage. Minimum for this shift: \${$minimumPrice} ({$hours}h × \${$hourlyMin}/hr)."])
+                ->withErrors(['end_time' => 'Start and end time cannot be the same.'])
                 ->withInput();
         }
 
-        // Combine date and time fields
-        $validated['start_time'] = $validated['service_date'].' '.$validated['start_time'];
-        $validated['end_time'] = $validated['service_date'].' '.$validated['end_time'];
+        // Calculate price from flat hourly rate × shift duration
+        // Handle overnight shifts: if end time is earlier than or equal to start time,
+        // the shift ends on the following day.
+        $startCarbon = \Carbon\Carbon::parse($validated['service_date'].' '.$validated['start_time']);
+        $endCarbon = \Carbon\Carbon::parse($validated['service_date'].' '.$validated['end_time']);
+
+        if ($endCarbon <= $startCarbon) {
+            $endCarbon->addDay();
+        }
+
+        $hours = $startCarbon->diffInMinutes($endCarbon) / 60;
+        $validated['price'] = round(config('marketplace.hourly_rate') * $hours, 2);
+
+        // Combine date and time fields (end_time may be next day for overnight shifts)
+        $validated['start_time'] = $startCarbon->toDateTimeString();
+        $validated['end_time'] = $endCarbon->toDateTimeString();
 
         // Set expiration (72 hours from now by default)
         $validated['expires_at'] = now()->addHours(config('marketplace.service_request_expiration_hours', 72));

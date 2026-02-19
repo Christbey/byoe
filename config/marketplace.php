@@ -10,7 +10,18 @@ return [
     | This is deducted from the service price before paying out to providers.
     |
     */
-    'platform_fee_percentage' => env('MARKETPLACE_PLATFORM_FEE_PERCENTAGE', 15.0),
+    'platform_fee_percentage' => env('MARKETPLACE_PLATFORM_FEE_PERCENTAGE', 12.5),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hourly Rate
+    |--------------------------------------------------------------------------
+    |
+    | The flat hourly rate charged to shops for all service requests.
+    | Price is calculated automatically as: hours × hourly_rate.
+    |
+    */
+    'hourly_rate' => env('MARKETPLACE_HOURLY_RATE', 20.0),
 
     /*
     |--------------------------------------------------------------------------
