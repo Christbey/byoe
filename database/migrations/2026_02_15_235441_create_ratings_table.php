@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('booking_id')->constrained()->onDelete('cascade');
             $table->foreignId('rater_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('ratee_id')->constrained('users')->onDelete('cascade');
-            $table->enum('rater_type', ['shop', 'provider']);
+            $table->foreignId('ratee_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->enum('rater_type', ['shop', 'provider'])->nullable();
             $table->integer('rating')->unsigned();
             $table->text('comment')->nullable();
             $table->timestamps();

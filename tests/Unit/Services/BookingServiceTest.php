@@ -11,7 +11,6 @@ use App\Services\BookingService;
 use App\Services\StripeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
-use Mockery\MockInterface;
 
 uses(RefreshDatabase::class);
 
@@ -77,7 +76,7 @@ test('acceptServiceRequest creates booking', function () {
     $stripeService = \Mockery::mock(StripeService::class);
     $stripeService->shouldReceive('captureServiceRequestPayment')
         ->once()
-        ->andReturn(new \App\Models\Payment());
+        ->andReturn(new \App\Models\Payment);
     $bookingService = new BookingService($stripeService);
 
     $booking = $bookingService->acceptServiceRequest($serviceRequest, $provider);
@@ -143,7 +142,7 @@ test('acceptServiceRequest throws exception for non-open request', function () {
     $stripeService = \Mockery::mock(StripeService::class);
     $bookingService = new BookingService($stripeService);
 
-    expect(fn() => $bookingService->acceptServiceRequest($serviceRequest, $provider))
+    expect(fn () => $bookingService->acceptServiceRequest($serviceRequest, $provider))
         ->toThrow(\Exception::class, 'Service request is no longer available');
 });
 
@@ -205,7 +204,7 @@ test('completeBooking throws exception for already completed booking', function 
     $stripeService = \Mockery::mock(StripeService::class);
     $bookingService = new BookingService($stripeService);
 
-    expect(fn() => $bookingService->completeBooking($booking))
+    expect(fn () => $bookingService->completeBooking($booking))
         ->toThrow(\Exception::class, 'Booking is already completed');
 });
 
@@ -242,6 +241,9 @@ test('cancelBooking within window allows full refund', function () {
     ]);
 
     $stripeService = \Mockery::mock(StripeService::class);
+    $stripeService->shouldReceive('refundPayment')->once()->andReturnUsing(function ($payment) {
+        $payment->markAsRefunded();
+    });
     $bookingService = new BookingService($stripeService);
 
     $result = $bookingService->cancelBooking($booking, 'Customer request');
@@ -290,6 +292,9 @@ test('cancelBooking in partial refund window', function () {
     ]);
 
     $stripeService = \Mockery::mock(StripeService::class);
+    $stripeService->shouldReceive('refundPayment')->once()->andReturnUsing(function ($payment) {
+        $payment->markAsRefunded();
+    });
     $bookingService = new BookingService($stripeService);
 
     $result = $bookingService->cancelBooking($booking, 'Customer request');
@@ -374,7 +379,7 @@ test('cancelBooking throws exception for already cancelled booking', function ()
     $stripeService = \Mockery::mock(StripeService::class);
     $bookingService = new BookingService($stripeService);
 
-    expect(fn() => $bookingService->cancelBooking($booking, 'Test'))
+    expect(fn () => $bookingService->cancelBooking($booking, 'Test'))
         ->toThrow(\Exception::class, 'Booking is already cancelled');
 });
 

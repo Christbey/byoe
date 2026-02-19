@@ -74,14 +74,19 @@ class ServiceRequestController extends Controller
      * Intentionally uses a separate shop resolution path from resolveShop() so
      * that locations and industry skills can be eager-loaded in a single query.
      */
-    public function create(Request $request): Response
+    public function create(Request $request): Response|RedirectResponse
     {
         $shop = $this->resolveShop($request)?->load('industry.skills', 'industry.templates');
 
+        if (! $shop?->locations()->exists()) {
+            return redirect()->route('shop.locations.create')
+                ->with('info', 'Add a location for your shop before posting a service request.');
+        }
+
         return Inertia::render('shop/CreateServiceRequest', [
-            'locations' => $shop?->locations ?? collect(),
-            'skills' => $shop?->availableSkills() ?? [],
-            'templates' => $shop?->availableTemplates() ?? [],
+            'locations' => $shop->locations,
+            'skills' => $shop->availableSkills(),
+            'templates' => $shop->availableTemplates(),
             'hourlyRate' => config('marketplace.hourly_rate'),
             'platformFeePercentage' => config('marketplace.platform_fee_percentage'),
         ]);

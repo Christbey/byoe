@@ -131,6 +131,7 @@ const roleLabels: Record<string, string> = {
                         name="password"
                         placeholder="Password"
                     />
+                    <p class="text-xs text-muted-foreground">Must be at least 8 characters</p>
                     <InputError :message="errors.password" />
                 </div>
 
@@ -148,10 +149,30 @@ const roleLabels: Record<string, string> = {
                     <InputError :message="errors.password_confirmation" />
                 </div>
 
+                <div class="grid gap-2">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            name="terms"
+                            value="1"
+                            :tabindex="5"
+                            class="mt-0.5 size-4 rounded border-border accent-primary"
+                            required
+                        />
+                        <span class="text-sm text-muted-foreground leading-snug">
+                            I agree to the
+                            <a href="/legal/terms" target="_blank" class="text-foreground underline underline-offset-2 hover:text-primary">Terms of Service</a>
+                            and, if registering as a Contractor, the
+                            <a href="/legal/contractor" target="_blank" class="text-foreground underline underline-offset-2 hover:text-primary">Independent Contractor Agreement</a>.
+                        </span>
+                    </label>
+                    <InputError :message="errors.terms" />
+                </div>
+
                 <Button
                     type="submit"
                     class="mt-2 w-full"
-                    tabindex="5"
+                    tabindex="6"
                     :disabled="processing || !selectedRole"
                     data-test="register-user-button"
                 >
@@ -162,7 +183,7 @@ const roleLabels: Record<string, string> = {
 
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?
-                <TextLink :href="login()" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
+                <TextLink :href="login()" class="underline underline-offset-4" :tabindex="7">Log in</TextLink>
             </div>
         </Form>
     </AuthBase>

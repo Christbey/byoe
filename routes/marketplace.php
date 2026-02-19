@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DisputeController;
+use App\Http\Controllers\Admin\ResolveDisputeController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Provider\AcceptServiceRequestController;
@@ -112,6 +113,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
     Route::get('/users', UserController::class)->name('users');
     Route::get('/disputes', DisputeController::class)->name('disputes');
+    Route::post('/disputes/{dispute}/resolve', ResolveDisputeController::class)->name('disputes.resolve');
     Route::get('/audit-logs', AuditLogController::class)->name('audit-logs');
     Route::get('/settings', SettingController::class)->name('settings');
 });

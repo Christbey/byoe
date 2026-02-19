@@ -13,7 +13,7 @@ Your booking has been confirmed! Here are the details:
 
 **Location:** {{ $booking->serviceRequest->shopLocation->fullAddress() }}
 
-@if(auth()->check() && auth()->user()->isShopOwner())
+@if($recipient->isShopOwner())
 **Provider:** {{ $booking->provider->user->name }}
 @else
 **Shop:** {{ $booking->serviceRequest->shopLocation->shop->name }}
@@ -23,7 +23,7 @@ Your booking has been confirmed! Here are the details:
 
 ## Next Steps
 
-@if(auth()->check() && auth()->user()->isShopOwner())
+@if($recipient->isShopOwner())
 - Your provider will arrive at the scheduled time
 - Make sure your location is accessible
 - Have any necessary equipment or materials ready
@@ -35,7 +35,7 @@ Your booking has been confirmed! Here are the details:
 - Your payout will be processed after service completion
 @endif
 
-@if(auth()->check() && auth()->user()->isShopOwner())
+@if($recipient->isShopOwner())
 <x-mail::button :url="route('shop.bookings.show', $booking)">
 View Booking
 </x-mail::button>

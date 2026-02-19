@@ -137,7 +137,7 @@ export interface Booking {
     status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
     status_label: string;
     status_variant: string;
-    accepted_at: string;
+    accepted_at?: string;
     completed_at?: string;
     cancelled_at?: string;
     cancellation_reason?: string;

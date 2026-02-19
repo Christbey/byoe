@@ -16,8 +16,7 @@ class CreatePaymentIntentController extends Controller
      */
     public function __construct(
         protected StripeService $stripeService
-    ) {
-    }
+    ) {}
 
     /**
      * Handle the incoming request.
@@ -34,6 +33,8 @@ class CreatePaymentIntentController extends Controller
                     'message' => 'Shop not found for this user.',
                 ], 403);
             }
+
+            $booking->load('serviceRequest.shopLocation');
 
             // Verify booking is for this shop's service request
             if ($booking->serviceRequest->shopLocation->shop_id !== $shop->id) {

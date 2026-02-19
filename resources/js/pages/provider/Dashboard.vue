@@ -56,10 +56,10 @@ const formatDate = (date: string) => {
 };
 
 const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+    return new Intl.DateTimeFormat('en-US', {
         hour: 'numeric',
         minute: '2-digit',
-    });
+    }).format(new Date(time));
 };
 </script>
 

@@ -21,14 +21,13 @@ interface User {
 
 interface Props {
     users: PaginatedResponse<User>;
-    search?: string;
-    role_filter?: string;
+    filters?: {
+        search?: string;
+        role?: string;
+    };
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    search: '',
-    role_filter: 'all',
-});
+const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -37,8 +36,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const searchQuery = ref(props.search);
-const roleFilter = ref(props.role_filter);
+const searchQuery = ref(props.filters?.search ?? '');
+const roleFilter = ref(props.filters?.role ?? 'all');
 
 const roles = [
     { key: 'all', label: 'All Roles' },
@@ -219,9 +218,9 @@ const getStatusColor = (status: string) => {
                     </svg>
                     <h3 class="text-lg font-semibold mb-2">No users found</h3>
                     <p class="text-sm text-muted-foreground max-w-md">
-                        {{ search ? 'No users match your search. Try a different name or email.' : 'No users match the selected filter.' }}
+                        {{ searchQuery ? 'No users match your search. Try a different name or email.' : 'No users match the selected filter.' }}
                     </p>
-                    <Button v-if="search || role_filter !== 'all'" variant="outline" class="mt-4" @click="router.get('/admin/users')">
+                    <Button v-if="searchQuery || roleFilter !== 'all'" variant="outline" class="mt-4" @click="router.get('/admin/users')">
                         Clear filters
                     </Button>
                 </CardContent>

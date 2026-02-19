@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Mail\Booking\BookingConfirmation;
+use App\Mail\Rating\RatingReminder;
 use App\Models\Booking;
 use App\Models\Provider;
 use App\Models\ServiceRequest;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Service for managing bookings and business logic.
@@ -87,6 +90,13 @@ class BookingService
                 'service_request_id' => $request->id,
                 'provider_id' => $provider->id,
             ]);
+
+            // Notify provider and shop owner of the new booking
+            $booking->load(['serviceRequest.shopLocation.shop.user', 'provider.user']);
+            $providerUser = $booking->provider->user;
+            $shopUser = $booking->serviceRequest->shopLocation->shop->user;
+            Mail::to($providerUser)->queue(new BookingConfirmation($booking, $providerUser));
+            Mail::to($shopUser)->queue(new BookingConfirmation($booking, $shopUser));
 
             return $booking;
         } catch (UniqueConstraintViolationException) {
@@ -172,6 +182,12 @@ class BookingService
                 'booking_id' => $booking->id,
                 'provider_id' => $provider->id,
             ]);
+
+            // Remind both parties to leave a rating
+            $booking->load(['serviceRequest.shopLocation.shop.user', 'provider.user']);
+            $shopUser = $booking->serviceRequest->shopLocation->shop->user;
+            Mail::to($provider->user)->queue(new RatingReminder($booking, $provider->user));
+            Mail::to($shopUser)->queue(new RatingReminder($booking, $shopUser));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to complete booking', [
@@ -238,9 +254,7 @@ class BookingService
 
                 // Process refund if applicable
                 if ($refundAmount > 0) {
-                    // TODO: Implement actual Stripe refund
-                    // For now, just mark payment as refunded
-                    $payment->markAsRefunded();
+                    $this->stripeService->refundPayment($payment, $refundAmount);
 
                     Log::info('Refund processed', [
                         'booking_id' => $booking->id,

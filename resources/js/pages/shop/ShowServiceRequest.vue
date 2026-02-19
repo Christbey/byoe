@@ -49,6 +49,13 @@ const formatDate = (date: string) => {
     }).format(new Date(date));
 };
 
+const formatTime = (datetime: string) => {
+    return new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+    }).format(new Date(datetime));
+};
+
 const formatDateTime = (datetime: string) => {
     return new Intl.DateTimeFormat('en-US', {
         month: 'short',
@@ -301,7 +308,7 @@ const handlePaymentSuccess = () => {
                             <div class="py-4">
                                 <p class="font-medium text-muted-foreground">Time</p>
                                 <p class="font-semibold mt-0.5">
-                                    {{ formatDateTime(serviceRequest.start_time) }} – {{ formatDateTime(serviceRequest.end_time) }}
+                                    {{ formatTime(serviceRequest.start_time) }} – {{ formatTime(serviceRequest.end_time) }}
                                 </p>
                             </div>
                             <div class="py-4">

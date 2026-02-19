@@ -18,8 +18,7 @@ interface Dispute {
     id: number;
     booking_id: number;
     filed_by_user_id: number;
-    against_user_id: number;
-    type: string;
+    dispute_type: string;
     description: string;
     status: 'open' | 'under_review' | 'resolved' | 'closed';
     resolution_notes?: string;
@@ -29,13 +28,22 @@ interface Dispute {
     against?: { name: string; email: string };
 }
 
+interface StatusCounts {
+    open: number;
+    under_review: number;
+    resolved: number;
+    closed: number;
+}
+
 interface Props {
     disputes: PaginatedResponse<Dispute>;
     filter?: string;
+    statusCounts?: StatusCounts;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     filter: 'open',
+    statusCounts: () => ({ open: 0, under_review: 0, resolved: 0, closed: 0 }),
 });
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -48,7 +56,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const activeFilter = ref(props.filter);
 const resolvingDisputeId = ref<number | null>(null);
 
-const filters = [
+const filters: { key: keyof StatusCounts; label: string }[] = [
     { key: 'open', label: 'Open' },
     { key: 'under_review', label: 'Under Review' },
     { key: 'resolved', label: 'Resolved' },
@@ -131,6 +139,9 @@ const getStatusColor = (status: string) => {
                     class="cursor-pointer whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors touch-manipulation"
                 >
                     {{ filter.label }}
+                    <span v-if="statusCounts[filter.key] > 0" class="ml-1.5 rounded-full bg-current/15 px-1.5 py-0.5 text-xs font-semibold tabular-nums">
+                        {{ statusCounts[filter.key] }}
+                    </span>
                 </Badge>
             </div>
 
@@ -144,7 +155,7 @@ const getStatusColor = (status: string) => {
                                     Dispute #{{ dispute.id }}
                                 </CardTitle>
                                 <div class="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline">{{ dispute.type }}</Badge>
+                                    <Badge variant="outline">{{ dispute.dispute_type }}</Badge>
                                     <Badge :variant="getStatusColor(dispute.status)">
                                         {{ dispute.status.replace('_', ' ') }}
                                     </Badge>

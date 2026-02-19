@@ -23,15 +23,19 @@ class CreateNewUser implements CreatesNewUsers
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
             'role' => ['required', 'in:shop_owner,provider'],
+            'terms' => ['required', 'accepted'],
         ], [
             'role.required' => 'Please select whether you are a Shop Owner or a Contractor.',
             'role.in' => 'Invalid account type selected.',
+            'terms.required' => 'You must accept the Terms of Service to create an account.',
+            'terms.accepted' => 'You must accept the Terms of Service to create an account.',
         ])->validate();
 
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
+            'terms_accepted_at' => now(),
         ]);
 
         $user->assignRole($input['role']);

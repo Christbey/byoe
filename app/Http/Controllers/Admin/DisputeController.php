@@ -10,35 +10,48 @@ use Inertia\Response;
 
 class DisputeController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     */
     public function __invoke(Request $request): Response
     {
-        $statusFilter = $request->query('status', 'all');
+        $statusFilter = $request->query('filter', 'all');
 
-        $query = Dispute::with([
-            'booking.serviceRequest.shopLocation.shop',
+        $disputes = Dispute::with([
+            'booking.serviceRequest.shopLocation.shop.user',
             'booking.provider.user',
+            'filedByUser',
         ])
-            ->when($statusFilter !== 'all', function ($query) use ($statusFilter) {
-                $query->where('status', $statusFilter);
-            })
-            ->orderBy('created_at', 'desc');
+            ->when($statusFilter !== 'all', fn ($q) => $q->where('status', $statusFilter))
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
-        $disputes = $query->paginate(15);
+        $disputes->getCollection()->transform(function (Dispute $dispute) {
+            $booking = $dispute->booking;
+            $shopUser = $booking?->serviceRequest?->shopLocation?->shop?->user;
+            $providerUser = $booking?->provider?->user;
+            $filedBy = $dispute->filedByUser;
 
-        // Count by status
+            $against = $filedBy?->id === $shopUser?->id ? $providerUser : $shopUser;
+
+            $dispute->filed_by = $filedBy
+                ? ['name' => $filedBy->name, 'email' => $filedBy->email]
+                : null;
+
+            $dispute->against = $against
+                ? ['name' => $against->name, 'email' => $against->email]
+                : null;
+
+            return $dispute;
+        });
+
         $statusCounts = [
             'open' => Dispute::where('status', 'open')->count(),
-            'investigating' => Dispute::where('status', 'investigating')->count(),
+            'under_review' => Dispute::where('status', 'under_review')->count(),
             'resolved' => Dispute::where('status', 'resolved')->count(),
             'closed' => Dispute::where('status', 'closed')->count(),
         ];
 
         return Inertia::render('admin/Disputes', [
             'disputes' => $disputes,
-            'statusFilter' => $statusFilter,
+            'filter' => $statusFilter,
             'statusCounts' => $statusCounts,
         ]);
     }

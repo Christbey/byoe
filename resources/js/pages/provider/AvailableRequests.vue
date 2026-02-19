@@ -167,7 +167,7 @@ onUnmounted(() => {
                 Requesting your location...
             </div>
             <div
-                v-else-if="filter === 'nearby' && locationSource"
+                v-else-if="activeFilter === 'nearby' && locationSource"
                 class="flex items-center gap-2 text-sm text-muted-foreground rounded-lg bg-muted/50 px-3 py-2"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0">
@@ -177,7 +177,7 @@ onUnmounted(() => {
                 <span v-else>Showing nearby requests using your saved zip code</span>
             </div>
             <div
-                v-else-if="filter === 'nearby' && !locationSource && !isRequestingGps"
+                v-else-if="activeFilter === 'nearby' && !locationSource && !isRequestingGps"
                 class="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm text-amber-800 dark:text-amber-300"
             >
                 Could not determine your location. Enable GPS or add a zip code to your

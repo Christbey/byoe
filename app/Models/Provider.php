@@ -174,7 +174,6 @@ class Provider extends Model
             'skills_added' => ! empty($this->skills),
             'payout_account_connected' => $this->stripeAccount?->isFullyOnboarded() ?? false,
             'availability_set' => ! empty($this->availability_schedule),
-            'certifications_added' => ! empty($this->certifications),
         ];
 
         $completed = count(array_filter($steps));

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CreateServiceRequestController;
 use App\Http\Controllers\Payment\CreatePaymentIntentController;
 use App\Http\Controllers\Payment\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -62,8 +63,13 @@ Route::prefix('v1')->group(function () {
     });
 });
 
+// Shop API routes (session auth)
+Route::middleware(['web', 'auth', 'verified'])->group(function () {
+    Route::post('/service-requests', CreateServiceRequestController::class)->name('api.service-requests.store');
+});
+
 // Payment routes (session auth)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::prefix('payments')->name('payments.')->group(function () {
         Route::post('/bookings/{booking}/payment-intent', CreatePaymentIntentController::class)->name('create-intent');
     });

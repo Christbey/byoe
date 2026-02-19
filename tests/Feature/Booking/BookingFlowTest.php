@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\AcceptServiceRequestAction;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Provider;
@@ -34,7 +33,7 @@ test('provider can accept service request', function () {
 
     // Assert booking was created
     expect($booking)->toBeInstanceOf(Booking::class);
-    expect($booking->status)->toBe('pending');
+    expect($booking->status)->toBe('confirmed');
     expect($booking->provider_id)->toBe($provider->id);
     expect($booking->service_request_id)->toBe($serviceRequest->id);
     expect($booking->service_price)->toBe(200.0);
@@ -46,22 +45,11 @@ test('provider can accept service request', function () {
     // Assert database has the booking
     $this->assertDatabaseHas('bookings', [
         'id' => $booking->id,
-        'status' => 'pending',
+        'status' => 'confirmed',
     ]);
 });
 
 test('shop owner can pay for booking', function () {
-    // Mock Stripe service to avoid actual API calls
-    $this->mock(StripeService::class, function ($mock) {
-        $mock->shouldReceive('createPaymentIntent')
-            ->once()
-            ->andReturn(Payment::factory()->make([
-                'stripe_payment_intent_id' => 'pi_test123',
-                'amount' => 200.00,
-                'status' => 'pending',
-            ]));
-    });
-
     // Create shop owner
     $shopOwner = User::factory()->create();
     $shopOwner->assignRole('shop_owner');
@@ -260,7 +248,7 @@ test('provider cannot accept already filled request', function () {
     // Try to accept filled request
     $bookingService = app(BookingService::class);
 
-    expect(fn() => $bookingService->acceptServiceRequest($serviceRequest, $provider))
+    expect(fn () => $bookingService->acceptServiceRequest($serviceRequest, $provider))
         ->toThrow(\Exception::class, 'Service request is no longer available');
 
     // Assert no booking was created

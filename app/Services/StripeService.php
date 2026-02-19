@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Mail\Payment\PaymentReceipt;
+use App\Mail\Payout\PayoutNotification;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Payout;
@@ -10,10 +12,12 @@ use App\Models\ProviderStripeAccount;
 use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Exception\ApiErrorException;
 use Stripe\PaymentIntent;
+use Stripe\Refund;
 use Stripe\Stripe;
 use Stripe\Transfer;
 
@@ -445,6 +449,10 @@ class StripeService
                 'payment_intent_id' => $captured->id,
             ]);
 
+            // Email receipt to shop owner
+            $shopUser = $booking->serviceRequest->shopLocation->shop->user;
+            Mail::to($shopUser)->queue(new PaymentReceipt($payment));
+
             return $payment;
         } catch (ApiErrorException $e) {
             Log::error('Failed to capture service request payment', [
@@ -643,7 +651,8 @@ class StripeService
 
             // Update payment — only overwrite paid_at if not already captured
             $updates = ['payment_method_type' => $paymentIntent->payment_method_types[0] ?? null];
-            if (! $payment->isSucceeded()) {
+            $wasAlreadySucceeded = $payment->isSucceeded();
+            if (! $wasAlreadySucceeded) {
                 $updates['status'] = 'succeeded';
                 $updates['paid_at'] = now();
             }
@@ -657,11 +666,12 @@ class StripeService
             }
 
             // Schedule payout only if one doesn't already exist for this booking
+            $payout = null;
             if (! $booking->payout) {
                 $holdDays = config('marketplace.payout.auto_payout_delay_days', 3);
                 $scheduledFor = now()->addDays($holdDays);
 
-                Payout::create([
+                $payout = Payout::create([
                     'booking_id' => $booking->id,
                     'provider_id' => $booking->provider_id,
                     'amount' => $booking->provider_payout,
@@ -673,10 +683,21 @@ class StripeService
 
             DB::commit();
 
+            // Send receipt to shop owner if payment wasn't already captured via sync flow
+            if (! $wasAlreadySucceeded) {
+                $shopUser = $booking->serviceRequest->shopLocation->shop->user;
+                Mail::to($shopUser)->queue(new PaymentReceipt($payment));
+            }
+
+            // Notify provider of scheduled payout
+            if ($payout) {
+                Mail::to($booking->provider->user)->queue(new PayoutNotification($payout));
+            }
+
             Log::info('Payment succeeded and payout scheduled', [
                 'payment_id' => $payment->id,
                 'booking_id' => $booking->id,
-                'scheduled_for' => $scheduledFor,
+                'scheduled_for' => $payout?->scheduled_for,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -699,6 +720,35 @@ class StripeService
      *
      * @throws \Exception If payout processing fails
      */
+    /**
+     * Issue a Stripe refund against a succeeded payment.
+     *
+     * @throws \Exception If the Stripe API call fails
+     */
+    public function refundPayment(Payment $payment, float $amount): void
+    {
+        try {
+            $refund = Refund::create([
+                'payment_intent' => $payment->stripe_payment_intent_id,
+                'amount' => (int) round($amount * 100),
+            ]);
+
+            $payment->markAsRefunded();
+
+            Log::info('Stripe refund created', [
+                'payment_id' => $payment->id,
+                'refund_id' => $refund->id,
+                'amount' => $amount,
+            ]);
+        } catch (ApiErrorException $e) {
+            Log::error('Failed to create Stripe refund', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw new \Exception('Failed to process refund: '.$e->getMessage());
+        }
+    }
+
     public function processPayout(Payout $payout): void
     {
         try {
