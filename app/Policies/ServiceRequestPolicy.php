@@ -102,11 +102,28 @@ class ServiceRequestPolicy
 
         // Shop owner can cancel their own requests (only if not filled)
         return $serviceRequest->shopLocation->shop->user_id === $user->id
-            && in_array($serviceRequest->status, ['open', 'pending']);
+            && in_array($serviceRequest->status, ['pending_payment', 'open']);
+    }
+
+    /**
+     * Determine whether the user can confirm the payment for a service request.
+     */
+    public function confirmPayment(User $user, ServiceRequest $serviceRequest): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        $serviceRequest->loadMissing('shopLocation.shop');
+
+        return $serviceRequest->shopLocation->shop->user_id === $user->id;
     }
 
     /**
      * Determine whether the user can accept the service request.
+     *
+     * Only checks role-level authorization. Business rule validation (active status,
+     * Stripe onboarding, request status, expiry) is handled in BookingService.
      */
     public function accept(User $user, ServiceRequest $serviceRequest): bool
     {
@@ -115,23 +132,10 @@ class ServiceRequestPolicy
             return false;
         }
 
-        // Request must be open
-        if ($serviceRequest->status !== 'open') {
-            return false;
-        }
-
-        // Provider must be active
-        if (! $user->provider->is_active) {
-            return false;
-        }
-
         // Provider cannot accept their own shop's requests
         $serviceRequest->loadMissing('shopLocation.shop');
-        if ($serviceRequest->shopLocation->shop->user_id === $user->id) {
-            return false;
-        }
 
-        return true;
+        return $serviceRequest->shopLocation->shop->user_id !== $user->id;
     }
 
     /**

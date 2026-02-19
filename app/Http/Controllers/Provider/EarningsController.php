@@ -16,20 +16,6 @@ class EarningsController extends Controller
         $provider = $request->user()->provider;
 
         $tab = $request->query('tab', 'earnings');
-
-        if (! $provider) {
-            return Inertia::render('provider/Earnings', [
-                'needsProfile' => true,
-                'tab' => $tab,
-                'bookings' => null,
-                'payouts' => null,
-                'earningsStats' => $this->emptyEarningsStats(),
-                'payoutStats' => $this->emptyPayoutStats(),
-                'period' => 'all',
-                'filter' => 'all',
-            ]);
-        }
-
         $period = $request->query('period', 'all');
         $filter = $request->query('filter', 'all');
 
@@ -95,7 +81,6 @@ class EarningsController extends Controller
         }
 
         return Inertia::render('provider/Earnings', [
-            'needsProfile' => false,
             'tab' => $tab,
             'bookings' => $bookings,
             'payouts' => $payouts,

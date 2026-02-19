@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import Badge from '@/components/ui/badge/Badge.vue';
 import PageHelp from '@/components/marketplace/PageHelp.vue';
 import PaymentForm from '@/components/marketplace/PaymentForm.vue';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 interface Props {
     serviceRequest: ServiceRequest;
@@ -59,57 +59,6 @@ const formatDateTime = (datetime: string) => {
     }).format(new Date(datetime));
 };
 
-const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-        pending_payment: 'warning',
-        open: 'info',
-        filled: 'outline',
-        expired: 'destructive',
-        cancelled: 'outline',
-        pending: 'warning',
-        confirmed: 'info',
-        in_progress: 'info',
-        completed: 'success',
-    };
-    return colors[status] || 'outline';
-};
-
-const requestStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-        pending_payment: 'Payment Required',
-        open: 'Open',
-        filled: 'Booked',
-        expired: 'Expired',
-        cancelled: 'Cancelled',
-    };
-    return labels[status] ?? status;
-};
-
-const bookingStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-        pending: 'Pending',
-        confirmed: 'Confirmed',
-        in_progress: 'In Progress',
-        completed: 'Completed',
-        cancelled: 'Cancelled',
-    };
-    return labels[status] ?? status;
-};
-
-// When a request is 'filled' and its booking is 'completed', surface that as the effective status
-const requestLabel = computed(() => {
-    if (props.serviceRequest.status === 'filled' && props.serviceRequest.booking?.status === 'completed') {
-        return 'Completed';
-    }
-    return requestStatusLabel(props.serviceRequest.status);
-});
-
-const requestVariant = computed(() => {
-    if (props.serviceRequest.status === 'filled' && props.serviceRequest.booking?.status === 'completed') {
-        return 'success';
-    }
-    return getStatusColor(props.serviceRequest.status);
-});
 
 const handleCancelRequest = () => {
     if (
@@ -147,8 +96,8 @@ const handlePaymentSuccess = () => {
                         <h1 class="text-2xl font-bold tracking-tight md:text-3xl">
                             {{ serviceRequest.title }}
                         </h1>
-                        <Badge :variant="requestVariant">
-                            {{ requestLabel }}
+                        <Badge :variant="serviceRequest.status_variant">
+                            {{ serviceRequest.status_label }}
                         </Badge>
                     </div>
                     <p class="text-sm text-muted-foreground md:text-base">
@@ -309,8 +258,8 @@ const handlePaymentSuccess = () => {
                                 <div class="grid grid-cols-2 gap-3 text-sm">
                                     <div>
                                         <p class="font-medium text-muted-foreground">Booking Status</p>
-                                        <Badge :variant="getStatusColor(serviceRequest.booking.status)" class="mt-1">
-                                            {{ bookingStatusLabel(serviceRequest.booking.status) }}
+                                        <Badge :variant="serviceRequest.booking.status_variant" class="mt-1">
+                                            {{ serviceRequest.booking.status_label }}
                                         </Badge>
                                     </div>
                                     <div>
@@ -361,7 +310,7 @@ const handlePaymentSuccess = () => {
                             </div>
                             <div class="py-4">
                                 <p class="font-medium text-muted-foreground">Status</p>
-                                <Badge :variant="requestVariant" class="mt-1">{{ requestLabel }}</Badge>
+                                <Badge :variant="serviceRequest.status_variant" class="mt-1">{{ serviceRequest.status_label }}</Badge>
                             </div>
                             <div v-if="serviceRequest.status === 'open'" class="py-4">
                                 <p class="font-medium text-muted-foreground">Expires</p>

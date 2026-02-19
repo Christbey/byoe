@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
+use App\Services\StripeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Stripe\Account;
-use Stripe\Stripe;
 
 class StripeSetupSyncController extends Controller
 {
+    public function __construct(
+        protected StripeService $stripeService
+    ) {}
+
     /**
      * Sync the provider's Stripe account status from the Stripe API.
      *
@@ -26,42 +29,15 @@ class StripeSetupSyncController extends Controller
             return response()->json(['error' => 'No Stripe account found'], 422);
         }
 
-        $stripeAccount = $provider->stripeAccount;
-
         try {
-            Stripe::setApiKey(config('stripe.secret_key'));
-
-            $account = Account::retrieve($stripeAccount->stripe_account_id);
-
-            $updates = [
-                'charges_enabled' => $account->charges_enabled ?? false,
-                'payouts_enabled' => $account->payouts_enabled ?? false,
-                'details_submitted' => $account->details_submitted ?? false,
-            ];
-
-            if (
-                ($account->charges_enabled ?? false) &&
-                ($account->payouts_enabled ?? false) &&
-                ($account->details_submitted ?? false) &&
-                ! $stripeAccount->onboarding_completed_at
-            ) {
-                $updates['onboarding_completed_at'] = now();
-            }
-
-            $stripeAccount->update($updates);
+            $status = $this->stripeService->syncStripeAccount($provider->stripeAccount);
 
             Log::info('Stripe account synced on onboarding exit', [
                 'provider_id' => $provider->id,
-                'charges_enabled' => $account->charges_enabled,
-                'payouts_enabled' => $account->payouts_enabled,
-                'details_submitted' => $account->details_submitted,
+                ...$status,
             ]);
 
-            return response()->json([
-                'charges_enabled' => $account->charges_enabled ?? false,
-                'payouts_enabled' => $account->payouts_enabled ?? false,
-                'details_submitted' => $account->details_submitted ?? false,
-            ]);
+            return response()->json($status);
         } catch (\Exception $e) {
             Log::error('Failed to sync Stripe account status', [
                 'provider_id' => $provider->id,

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Shop\UpdateShopRequest;
 use App\Models\Industry;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,7 +18,7 @@ class ShopController extends Controller
      */
     public function show(Request $request): Response
     {
-        $shop = $this->resolveShop($request);
+        $shop = $this->resolveShopProfile($request);
         $tab = $request->query('tab', 'profile');
 
         $locations = $shop->id
@@ -37,7 +37,7 @@ class ShopController extends Controller
      */
     public function edit(Request $request): Response
     {
-        $shop = $this->resolveShop($request);
+        $shop = $this->resolveShopProfile($request);
 
         $industries = Industry::where('is_active', true)->orderBy('sort_order')->get();
 
@@ -50,28 +50,11 @@ class ShopController extends Controller
     /**
      * Update the shop profile.
      */
-    public function update(Request $request): RedirectResponse
+    public function update(UpdateShopRequest $request): RedirectResponse
     {
         $shop = $request->user()->shop;
 
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'website' => ['nullable', 'url', 'max:255'],
-            'operating_hours' => ['nullable', 'array'],
-            'industry_id' => ['nullable', 'exists:industries,id'],
-            'custom_skills' => ['nullable', 'array'],
-            'ein' => ['nullable', 'string', 'regex:/^\d{2}-\d{7}$/'],
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $validated = $validator->validated();
+        $validated = $request->validated();
 
         if (! $shop) {
             $shop = $request->user()->shop()->create([
@@ -86,7 +69,7 @@ class ShopController extends Controller
             ->with('success', 'Shop profile updated successfully!');
     }
 
-    private function resolveShop(Request $request): Shop
+    private function resolveShopProfile(Request $request): Shop
     {
         $shop = $request->user()->shop?->load('industry');
 

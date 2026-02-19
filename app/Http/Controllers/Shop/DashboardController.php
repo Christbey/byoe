@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
-use App\Models\Shop;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,27 +17,7 @@ class DashboardController extends Controller
      */
     public function __invoke(Request $request): Response
     {
-        // Get the authenticated user's shop
-        $shop = $request->user()->shop;
-
-        // If user doesn't have a shop yet (admin viewing), use the first available shop
-        if (! $shop && $request->user()->hasRole('admin')) {
-            $shop = Shop::first();
-        }
-
-        if (! $shop) {
-            // User has no shop yet, return empty dashboard
-            return Inertia::render('shop/Dashboard', [
-                'shopName' => null,
-                'stats' => [
-                    'active_requests' => 0,
-                    'upcoming_bookings' => 0,
-                    'total_spent' => 0,
-                ],
-                'recent_requests' => [],
-                'upcoming_bookings' => [],
-            ]);
-        }
+        $shop = $this->resolveShop($request);
 
         // Get shop location IDs for queries
         $locationIds = $shop->locations()->pluck('id');

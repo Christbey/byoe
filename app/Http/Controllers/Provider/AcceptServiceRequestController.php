@@ -12,31 +12,20 @@ class AcceptServiceRequestController extends Controller
 {
     public function __construct(
         protected AcceptServiceRequestAction $acceptServiceRequestAction
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request, ServiceRequest $serviceRequest): RedirectResponse
     {
+        $this->authorize('accept', $serviceRequest);
+
         $provider = $request->user()->provider;
 
-        if (! $provider) {
-            return redirect()->back()->with('error', 'Provider profile not found. You must have a provider profile to accept service requests.');
-        }
-
         if (! $provider->is_active) {
-            return redirect()->back()->with('error', 'Your provider profile is not active.');
+            return redirect()->back()->with('error', 'Your provider account is not currently active.');
         }
 
         if (! $provider->stripeAccount?->isFullyOnboarded()) {
-            return redirect()->back()->with('error', 'You must complete your Stripe payout setup before accepting service requests.');
-        }
-
-        if (! $serviceRequest->isOpen()) {
-            return redirect()->back()->with('error', 'This service request is no longer available.');
-        }
-
-        if ($serviceRequest->isExpired()) {
-            return redirect()->back()->with('error', 'This service request has expired.');
+            return redirect()->back()->with('error', 'Please complete your Stripe payout setup before accepting requests.');
         }
 
         try {

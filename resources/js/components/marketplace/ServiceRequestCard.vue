@@ -14,6 +14,7 @@ import type { ServiceRequest } from '@/types/marketplace';
 interface Props {
     serviceRequest: ServiceRequest;
     class?: HTMLAttributes['class'];
+    distance?: number;
 }
 
 const props = defineProps<Props>();
@@ -120,6 +121,9 @@ const shopName = computed(() => {
                         />
                     </svg>
                     <span>{{ locationText }}</span>
+                    <span v-if="distance != null" class="text-xs text-muted-foreground">
+                        · ~{{ Math.round(distance) }} mi
+                    </span>
                 </div>
             </div>
 

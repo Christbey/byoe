@@ -13,6 +13,7 @@ import PageHelp from '@/components/marketplace/PageHelp.vue';
 interface Props {
     requests: PaginatedResponse<ServiceRequest>;
     filter?: string;
+    locationSource?: 'gps' | 'zip' | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -21,6 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const loadingRequestId = ref<number | null>(null);
 const confirmingRequest = ref<ServiceRequest | null>(null);
+const isRequestingGps = ref(false);
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Available Requests', href: '/provider/available-requests' },
@@ -37,6 +39,28 @@ const filters = [
 
 const handleFilterChange = (filterKey: string) => {
     activeFilter.value = filterKey;
+
+    if (filterKey === 'nearby' && 'geolocation' in navigator) {
+        isRequestingGps.value = true;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                isRequestingGps.value = false;
+                router.get('/provider/available-requests', {
+                    filter: 'nearby',
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                }, { preserveState: true, preserveScroll: true });
+            },
+            () => {
+                isRequestingGps.value = false;
+                router.get('/provider/available-requests', { filter: 'nearby' },
+                    { preserveState: true, preserveScroll: true });
+            },
+            { timeout: 10000 }
+        );
+        return;
+    }
+
     router.get('/provider/available-requests', { filter: filterKey }, {
         preserveState: true,
         preserveScroll: true,
@@ -134,6 +158,32 @@ onUnmounted(() => {
                 </Badge>
             </div>
 
+            <!-- Location Banner (Nearby filter) -->
+            <div v-if="isRequestingGps" class="flex items-center gap-2 text-sm text-muted-foreground">
+                <svg class="size-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Requesting your location...
+            </div>
+            <div
+                v-else-if="filter === 'nearby' && locationSource"
+                class="flex items-center gap-2 text-sm text-muted-foreground rounded-lg bg-muted/50 px-3 py-2"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0">
+                    <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" />
+                </svg>
+                <span v-if="locationSource === 'gps'">Showing nearby requests using your current location</span>
+                <span v-else>Showing nearby requests using your saved zip code</span>
+            </div>
+            <div
+                v-else-if="filter === 'nearby' && !locationSource && !isRequestingGps"
+                class="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm text-amber-800 dark:text-amber-300"
+            >
+                Could not determine your location. Enable GPS or add a zip code to your
+                <a href="/provider/profile/edit" class="underline font-medium">provider profile</a>.
+            </div>
+
             <!-- Results Count -->
             <div class="text-sm text-muted-foreground">
                 Showing {{ requests.data.length }} of {{ requests.total }} requests
@@ -145,6 +195,7 @@ onUnmounted(() => {
                     v-for="request in requests.data"
                     :key="request.id"
                     :service-request="request"
+                    :distance="filter === 'nearby' ? request.distance ?? undefined : undefined"
                     class="flex flex-col"
                 >
                     <MobileTapButton

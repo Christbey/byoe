@@ -23,12 +23,11 @@ class BookingService
     /**
      * Create a new BookingService instance.
      *
-     * @param StripeService $stripeService Service for handling Stripe operations
+     * @param  StripeService  $stripeService  Service for handling Stripe operations
      */
     public function __construct(
         private readonly StripeService $stripeService,
-    ) {
-    }
+    ) {}
 
     /**
      * Accept a service request and create a booking.
@@ -37,9 +36,10 @@ class BookingService
      * the platform fee and provider payout based on the service price, then
      * marks the service request as filled.
      *
-     * @param ServiceRequest $request The service request to accept
-     * @param Provider $provider The provider accepting the request
+     * @param  ServiceRequest  $request  The service request to accept
+     * @param  Provider  $provider  The provider accepting the request
      * @return Booking The created booking
+     *
      * @throws \Exception If booking creation fails
      */
     public function acceptServiceRequest(ServiceRequest $request, Provider $provider): Booking
@@ -50,7 +50,7 @@ class BookingService
             // Lock the row to prevent two providers from accepting simultaneously
             $lockedRequest = ServiceRequest::lockForUpdate()->find($request->id);
 
-            if (! $lockedRequest || ! $lockedRequest->isOpen()) {
+            if (! $lockedRequest || ! $lockedRequest->isOpen() || $lockedRequest->isExpired()) {
                 throw new \Exception('Service request is no longer available');
             }
 
@@ -115,7 +115,7 @@ class BookingService
      * - Platform fee: Percentage taken by the platform
      * - Provider payout: Amount paid to the provider after fees
      *
-     * @param float $servicePrice The total service price
+     * @param  float  $servicePrice  The total service price
      * @return array{service_price: float, platform_fee: float, provider_payout: float}
      */
     public function calculateFees(float $servicePrice): array
@@ -138,8 +138,8 @@ class BookingService
      * completed bookings count. This triggers the payout process if payment
      * has already been received.
      *
-     * @param Booking $booking The booking to complete
-     * @return void
+     * @param  Booking  $booking  The booking to complete
+     *
      * @throws \Exception If completion fails
      */
     public function completeBooking(Booking $booking): void
@@ -191,9 +191,10 @@ class BookingService
      * - 24-48 hours before: Partial refund (50%)
      * - Less than 24 hours: No refund
      *
-     * @param Booking $booking The booking to cancel
-     * @param string $reason The reason for cancellation
+     * @param  Booking  $booking  The booking to cancel
+     * @param  string  $reason  The reason for cancellation
      * @return bool True if cancellation was successful
+     *
      * @throws \Exception If cancellation fails
      */
     public function cancelBooking(Booking $booking, string $reason): bool

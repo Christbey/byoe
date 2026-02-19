@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Shop;
 use App\Services\BookingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,22 +23,7 @@ class BookingController extends Controller
     {
         $this->authorize('viewAny', Booking::class);
 
-        $shop = $request->user()->shop;
-
-        if (! $shop && $request->user()->hasRole('admin')) {
-            $shop = Shop::first();
-        }
-
-        if (! $shop) {
-            return Inertia::render('shop/Bookings', [
-                'bookings' => [
-                    'data' => [],
-                    'current_page' => 1,
-                    'last_page' => 1,
-                    'total' => 0,
-                ],
-            ]);
-        }
+        $shop = $this->resolveShop($request);
 
         $locationIds = $shop->locations()->pluck('id');
         $filter = $request->query('filter', 'all');

@@ -26,7 +26,6 @@ interface PayoutStats {
 }
 
 interface Props {
-    needsProfile: boolean;
     tab: string;
     bookings: PaginatedResponse<Booking> | null;
     payouts: PaginatedResponse<Payout> | null;
@@ -114,12 +113,7 @@ const payoutStatusVariant = (status: string) => {
                 <p class="text-sm text-muted-foreground">Track your income and payout history</p>
             </div>
 
-            <div v-if="needsProfile" class="rounded-lg border border-dashed p-8 text-center">
-                <p class="text-muted-foreground">Create your provider profile to track earnings.</p>
-            </div>
-
-            <template v-else>
-                <!-- Tab Navigation -->
+            <!-- Tab Navigation -->
                 <div class="flex border-b">
                     <button
                         @click="switchTab('earnings')"
@@ -347,7 +341,6 @@ const payoutStatusVariant = (status: string) => {
                         <Button variant="outline" @click="loadMorePayouts">Load More</Button>
                     </div>
                 </template>
-            </template>
         </div>
     </AppLayout>
 </template>

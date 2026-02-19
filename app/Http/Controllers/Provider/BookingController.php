@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Provider\RateBookingRequest;
 use App\Models\Booking;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,30 +19,15 @@ class BookingController extends Controller
     {
         $provider = $request->user()->provider;
 
-        if (! $provider) {
-            return Inertia::render('provider/MyBookings', [
-                'needsProfile' => true,
-                'bookings' => [],
-                'filter' => 'all',
-            ]);
-        }
-
         $filter = $request->query('filter', 'all');
 
-        $query = Booking::with([
-            'serviceRequest.shopLocation.shop',
-            'payment',
-        ])
+        $bookings = Booking::with(['serviceRequest.shopLocation.shop', 'payment'])
             ->where('provider_id', $provider->id)
-            ->when($filter !== 'all', function ($query) use ($filter) {
-                $query->where('status', $filter);
-            })
-            ->orderBy('created_at', 'desc');
-
-        $bookings = $query->paginate(15);
+            ->when($filter !== 'all', fn ($q) => $q->where('status', $filter))
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
         return Inertia::render('provider/MyBookings', [
-            'needsProfile' => false,
             'bookings' => $bookings,
             'filter' => $filter,
         ]);
@@ -52,23 +38,12 @@ class BookingController extends Controller
      */
     public function show(Request $request, Booking $booking): Response
     {
-        $provider = $request->user()->provider;
+        $this->authorize('view', $booking);
 
-        // Ensure the booking belongs to this provider
-        if ($booking->provider_id !== $provider?->id) {
-            abort(403, 'You do not have permission to view this booking.');
-        }
+        $booking->load(['serviceRequest.shopLocation.shop', 'payment', 'payout', 'ratings']);
 
-        $booking->load([
-            'serviceRequest.shopLocation.shop',
-            'payment',
-            'payout',
-            'ratings',
-        ]);
-
-        $user = $request->user();
         $hasRated = $booking->ratings()
-            ->where('rater_id', $user->id)
+            ->where('rater_id', $request->user()->id)
             ->where('rater_type', 'provider')
             ->exists();
 
@@ -81,7 +56,7 @@ class BookingController extends Controller
     /**
      * Rate the shop for a completed booking.
      */
-    public function rate(Request $request, Booking $booking): RedirectResponse
+    public function rate(RateBookingRequest $request, Booking $booking): RedirectResponse
     {
         $this->authorize('rate', $booking);
 
@@ -89,11 +64,6 @@ class BookingController extends Controller
             return redirect()->back()
                 ->withErrors(['booking' => 'You can only rate a completed booking.']);
         }
-
-        $request->validate([
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'comment' => ['nullable', 'string', 'max:500'],
-        ]);
 
         $user = $request->user();
 
@@ -113,11 +83,10 @@ class BookingController extends Controller
             'rater_id' => $user->id,
             'ratee_id' => $shop->user_id,
             'rater_type' => 'provider',
-            'rating' => $request->rating,
-            'comment' => $request->comment,
+            'rating' => $request->validated('rating'),
+            'comment' => $request->validated('comment'),
         ]);
 
-        return redirect()->back()
-            ->with('success', 'Thank you for your rating!');
+        return redirect()->back()->with('success', 'Thank you for your rating!');
     }
 }

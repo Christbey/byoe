@@ -86,16 +86,7 @@ const formatTime = (time: string) => {
     });
 };
 
-const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-        pending: 'secondary',
-        confirmed: 'default',
-        in_progress: 'default',
-        completed: 'secondary',
-        cancelled: 'destructive',
-    };
-    return colors[status] || 'outline';
-};
+
 </script>
 
 <template>
@@ -165,8 +156,8 @@ const getStatusColor = (status: string) => {
                                         }}
                                     </p>
                                 </div>
-                                <Badge :variant="getStatusColor(booking.status)">
-                                    {{ booking.status.replace('_', ' ') }}
+                                <Badge :variant="booking.status_variant">
+                                    {{ booking.status_label }}
                                 </Badge>
                             </div>
 

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
-use App\Models\Shop;
 use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -26,30 +25,7 @@ class PaymentController extends Controller
     {
         $tab = $request->query('tab', 'history');
 
-        // Get the authenticated user's shop
-        $shop = $request->user()->shop;
-
-        // If user doesn't have a shop yet (admin viewing), use the first available shop
-        if (! $shop && $request->user()->hasRole('admin')) {
-            $shop = Shop::first();
-        }
-
-        if (! $shop) {
-            return Inertia::render('shop/Payments', [
-                'tab' => $tab,
-                'payments' => [
-                    'data' => [],
-                    'current_page' => 1,
-                    'last_page' => 1,
-                    'total' => 0,
-                ],
-                'pendingAuthorizations' => [],
-                'filter' => 'all',
-                'clientSecret' => null,
-                'savedCard' => null,
-                'stripePublishableKey' => null,
-            ]);
-        }
+        $shop = $this->resolveShop($request);
 
         // Get filter from query params (default: 'all')
         $filter = $request->query('filter', 'all');

@@ -48,27 +48,6 @@ const formatDateTime = (datetime: string) =>
         minute: '2-digit',
     }).format(new Date(datetime));
 
-const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-        pending: 'warning',
-        confirmed: 'info',
-        in_progress: 'info',
-        completed: 'success',
-        cancelled: 'destructive',
-    };
-    return colors[status] || 'outline';
-};
-
-const statusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-        pending: 'Pending Payment',
-        confirmed: 'Confirmed',
-        in_progress: 'In Progress',
-        completed: 'Completed',
-        cancelled: 'Cancelled',
-    };
-    return labels[status] ?? status;
-};
 
 const handleComplete = () => {
     if (confirm('Mark this booking as complete?')) {
@@ -111,8 +90,8 @@ const submitRating = () => {
                 <div class="space-y-2">
                     <div class="flex items-center gap-3">
                         <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Booking Details</h1>
-                        <Badge :variant="getStatusColor(booking.status)">
-                            {{ statusLabel(booking.status) }}
+                        <Badge :variant="booking.status_variant">
+                            {{ booking.status_label }}
                         </Badge>
                     </div>
                     <p class="text-sm text-muted-foreground md:text-base">
@@ -331,8 +310,8 @@ const submitRating = () => {
                         <CardContent class="space-y-3">
                             <div>
                                 <p class="text-sm font-medium text-muted-foreground">Current Status</p>
-                                <Badge :variant="getStatusColor(booking.status)" class="mt-1">
-                                    {{ statusLabel(booking.status) }}
+                                <Badge :variant="booking.status_variant" class="mt-1">
+                                    {{ booking.status_label }}
                                 </Badge>
                             </div>
                             <div>

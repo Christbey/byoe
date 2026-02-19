@@ -32,25 +32,21 @@ class DashboardController extends Controller
 
         $earningsThisMonth = Payout::where('provider_id', $provider->id)
             ->where('status', 'paid')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->sum('amount');
 
         $earningsAllTime = Payout::where('provider_id', $provider->id)
             ->where('status', 'paid')
             ->sum('amount');
 
-        // Stats
-        $completedBookingsCount = Booking::where('provider_id', $provider->id)
-            ->where('status', 'completed')
-            ->count();
-
         // Upcoming bookings list
         $upcomingBookings = Booking::with(['serviceRequest.shopLocation.shop'])
-            ->where('provider_id', $provider->id)
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->whereHas('serviceRequest', fn ($q) => $q->where('service_date', '>=', now()))
-            ->orderByHas('serviceRequest', fn ($q) => $q->orderBy('service_date'))
+            ->join('service_requests', 'service_requests.id', '=', 'bookings.service_request_id')
+            ->where('bookings.provider_id', $provider->id)
+            ->whereIn('bookings.status', ['pending', 'confirmed'])
+            ->where('service_requests.service_date', '>=', now())
+            ->orderBy('service_requests.service_date')
+            ->select('bookings.*')
             ->limit(5)
             ->get();
 
@@ -61,7 +57,7 @@ class DashboardController extends Controller
                 'all_time' => $earningsAllTime,
             ],
             'stats' => [
-                'completed_jobs' => $completedBookingsCount,
+                'completed_jobs' => $provider->completed_bookings,
                 'average_rating' => round($provider->average_rating, 1),
                 'total_earnings' => $earningsAllTime,
                 'pending_invitations' => 0,

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureHasProviderProfile;
+use App\Http\Middleware\EnsureHasShopProfile;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -35,27 +37,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // Configure Sanctum for stateful/session auth (web) AND token auth (mobile)
         $middleware->statefulApi();
 
-        // Register Spatie Permission middleware aliases
+        // Register middleware aliases
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-        ]);
-    })
-    ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-
-        $middleware->web(append: [
-            HandleAppearance::class,
-            HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
-        ]);
-
-        // Register Spatie Permission middleware aliases
-        $middleware->alias([
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'shop.profile' => EnsureHasShopProfile::class,
+            'provider.profile' => EnsureHasProviderProfile::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

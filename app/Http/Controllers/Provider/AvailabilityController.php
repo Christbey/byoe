@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Provider\UpdateAvailabilityRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,35 +19,18 @@ class AvailabilityController extends Controller
             ->mapWithKeys(fn ($day) => [$day => ['available' => false, 'start' => '08:00', 'end' => '17:00']])
             ->toArray();
 
-        $schedule = $provider?->availability_schedule ?? $defaultSchedule;
-        $blackoutDates = $provider?->blackout_dates ?? [];
-        $minNoticeHours = $provider?->min_notice_hours ?? 24;
-
         return Inertia::render('provider/Availability', [
-            'needsProfile' => ! $provider,
-            'schedule' => $schedule,
-            'blackoutDates' => $blackoutDates,
-            'minNoticeHours' => $minNoticeHours,
+            'schedule' => $provider?->availability_schedule ?? $defaultSchedule,
+            'blackoutDates' => $provider?->blackout_dates ?? [],
+            'minNoticeHours' => $provider?->min_notice_hours ?? 24,
         ]);
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(UpdateAvailabilityRequest $request): RedirectResponse
     {
         $provider = $request->user()->provider;
 
-        if (! $provider) {
-            return redirect()->back()->with('error', 'Provider profile not found.');
-        }
-
-        $validated = $request->validate([
-            'schedule' => ['required', 'array'],
-            'schedule.*.available' => ['required', 'boolean'],
-            'schedule.*.start' => ['required_if:schedule.*.available,true', 'nullable', 'date_format:H:i'],
-            'schedule.*.end' => ['required_if:schedule.*.available,true', 'nullable', 'date_format:H:i'],
-            'blackout_dates' => ['nullable', 'array'],
-            'blackout_dates.*' => ['date_format:Y-m-d'],
-            'min_notice_hours' => ['required', 'integer', 'min:0', 'max:168'],
-        ]);
+        $validated = $request->validated();
 
         $provider->update([
             'availability_schedule' => $validated['schedule'],

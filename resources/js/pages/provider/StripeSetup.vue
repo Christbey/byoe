@@ -22,7 +22,6 @@ interface StripeAccount {
 }
 
 interface Props {
-    needsProfile?: boolean;
     stripe_account?: StripeAccount | null;
     accountSessionSecret?: string | null;
     stripePublishableKey?: string | null;
@@ -191,19 +190,8 @@ onMounted(async () => {
                 </p>
             </div>
 
-            <!-- Needs profile first -->
-            <Card v-if="needsProfile">
-                <CardHeader>
-                    <CardTitle>Complete Your Profile First</CardTitle>
-                    <CardDescription>You need a provider profile before setting up payouts.</CardDescription>
-                </CardHeader>
-                <CardFooter>
-                    <Button as="a" href="/provider/profile/edit">Set Up Profile</Button>
-                </CardFooter>
-            </Card>
-
             <!-- Fully onboarded — account management + Express Dashboard link -->
-            <template v-else-if="isOnboardingComplete && stripe_account">
+            <template v-if="isOnboardingComplete && stripe_account">
                 <Card>
                     <CardHeader>
                         <div class="flex items-center gap-3">

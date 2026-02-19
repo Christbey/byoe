@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
-use App\Models\Shop;
+use App\Http\Requests\Shop\LocationRequest;
 use App\Models\ShopLocation;
 use App\Services\GeocodingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,13 +25,7 @@ class LocationController extends Controller
      */
     public function index(Request $request): Response
     {
-        // Get the authenticated user's shop
-        $shop = $request->user()->shop;
-
-        // If user doesn't have a shop yet (admin viewing), use the first available shop
-        if (! $shop && $request->user()->hasRole('admin')) {
-            $shop = Shop::first();
-        }
+        $shop = $this->resolveShop($request);
 
         // Get shop locations
         $locations = $shop ? $shop->locations()->orderBy('is_primary', 'desc')->orderBy('created_at', 'asc')->get() : collect();
@@ -53,38 +46,11 @@ class LocationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(LocationRequest $request): RedirectResponse
     {
-        // Validate the request
-        $validator = Validator::make($request->all(), [
-            'address_line_1' => ['required', 'string', 'max:255'],
-            'address_line_2' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:100'],
-            'state' => ['required', 'string', 'size:2'],
-            'zip_code' => ['required', 'string', 'max:10'],
-            'is_primary' => ['nullable', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $validated = $validator->validated();
-
-        // Get the shop
-        $shop = $request->user()->shop;
-
-        if (! $shop && $request->user()->hasRole('admin')) {
-            $shop = Shop::first();
-        }
-
-        if (! $shop) {
-            return redirect()->back()
-                ->withErrors(['shop' => 'You must have a shop to create locations.'])
-                ->withInput();
-        }
+        $shop = $this->resolveShop($request);
 
         // If this is set as primary, unset all other primary locations
         if ($validated['is_primary'] ?? false) {
@@ -134,7 +100,7 @@ class LocationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ShopLocation $location): RedirectResponse
+    public function update(LocationRequest $request, ShopLocation $location): RedirectResponse
     {
         // Verify the user has permission to update this location
         $user = $request->user();
@@ -142,23 +108,7 @@ class LocationController extends Controller
             abort(403, 'You do not have permission to update this location.');
         }
 
-        // Validate the request
-        $validator = Validator::make($request->all(), [
-            'address_line_1' => ['required', 'string', 'max:255'],
-            'address_line_2' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:100'],
-            'state' => ['required', 'string', 'size:2'],
-            'zip_code' => ['required', 'string', 'max:10'],
-            'is_primary' => ['nullable', 'boolean'],
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $validated = $validator->validated();
+        $validated = $request->validated();
 
         // Check if address changed (need to re-geocode)
         $addressChanged =

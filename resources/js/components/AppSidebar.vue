@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
-    Award,
     Briefcase,
     Building2,
     CreditCard,
@@ -95,12 +94,6 @@ const mainNavItems = computed<NavItem[]>(() => {
                 href: '/provider/earnings',
                 icon: TrendingUp,
             },
-            {
-                title: 'Certifications',
-                href: '/provider/certifications',
-                icon: Award,
-            },
-
         );
     }
 

@@ -55,6 +55,39 @@ class Shop extends Model
     }
 
     /**
+     * Get the merged list of skill names available to this shop.
+     *
+     * Combines industry-default skills with the shop's own custom skills,
+     * deduplicating the result. Safe to call without pre-loading relations.
+     *
+     * @return list<string>
+     */
+    public function availableSkills(): array
+    {
+        $this->loadMissing('industry.skills');
+
+        $skills = $this->industry?->skills->pluck('name')->toArray() ?? [];
+
+        if (! empty($this->custom_skills)) {
+            $skills = array_values(array_unique(array_merge($skills, $this->custom_skills)));
+        }
+
+        return $skills;
+    }
+
+    /**
+     * Get the industry templates available to this shop.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function availableTemplates(): array
+    {
+        $this->loadMissing('industry.templates');
+
+        return $this->industry?->templates->toArray() ?? [];
+    }
+
+    /**
      * Get the shop's industry.
      */
     public function industry(): BelongsTo

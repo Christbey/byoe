@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import Badge from '@/components/ui/badge/Badge.vue';
 
 interface Props {
-    needsProfile: boolean;
     certifications: Certification[];
 }
 
@@ -98,17 +97,12 @@ const certTypeLabel = (key: string) =>
                     <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Certifications</h1>
                     <p class="text-sm text-muted-foreground">Manage your food service certifications and credentials</p>
                 </div>
-                <Button v-if="!needsProfile && !showForm" @click="showForm = true">
+                <Button v-if="!showForm" @click="showForm = true">
                     Add Certification
                 </Button>
             </div>
 
-            <div v-if="needsProfile" class="rounded-lg border border-dashed p-8 text-center">
-                <p class="text-muted-foreground">Create your provider profile first.</p>
-            </div>
-
-            <template v-else>
-                <!-- Add Form -->
+            <!-- Add Form -->
                 <Card v-if="showForm">
                     <form @submit.prevent="handleSubmit">
                         <CardHeader>
@@ -230,7 +224,6 @@ const certTypeLabel = (key: string) =>
                         </CardContent>
                     </Card>
                 </div>
-            </template>
         </div>
     </AppLayout>
 </template>

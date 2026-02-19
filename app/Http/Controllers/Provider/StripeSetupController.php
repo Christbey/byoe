@@ -26,15 +26,6 @@ class StripeSetupController extends Controller
     {
         $provider = $request->user()->provider;
 
-        if (! $provider) {
-            return Inertia::render('provider/StripeSetup', [
-                'needsProfile' => true,
-                'stripe_account' => null,
-                'accountSessionSecret' => null,
-                'stripePublishableKey' => null,
-            ]);
-        }
-
         $stripeAccount = $provider->stripeAccount;
 
         // Create the Connect account on first visit
@@ -64,7 +55,6 @@ class StripeSetupController extends Controller
         }
 
         return Inertia::render('provider/StripeSetup', [
-            'needsProfile' => false,
             'stripe_account' => $stripeAccount,
             'accountSessionSecret' => $accountSessionSecret,
             'stripePublishableKey' => config('stripe.publishable_key'),

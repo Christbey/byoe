@@ -26,12 +26,7 @@ class PaymentMethodSaveController extends Controller
             'payment_method_id' => ['required', 'string', 'starts_with:pm_'],
         ]);
 
-        $shop = $request->user()->shop;
-
-        if (! $shop) {
-            return redirect()->route('shop.dashboard')
-                ->withErrors(['payment' => 'No shop found for your account.']);
-        }
+        $shop = $this->resolveShop($request);
 
         try {
             $this->stripeService->saveShopPaymentMethod($shop, $request->payment_method_id);

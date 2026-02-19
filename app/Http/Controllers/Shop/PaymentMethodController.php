@@ -24,15 +24,7 @@ class PaymentMethodController extends Controller
      */
     public function __invoke(Request $request): Response
     {
-        $shop = $request->user()->shop;
-
-        if (! $shop) {
-            return Inertia::render('shop/PaymentMethod', [
-                'clientSecret' => null,
-                'stripePublishableKey' => null,
-                'savedCard' => null,
-            ]);
-        }
+        $shop = $this->resolveShop($request);
 
         // Fetch saved card details from Stripe if one is on file
         $savedCard = null;

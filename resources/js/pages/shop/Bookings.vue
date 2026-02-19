@@ -72,27 +72,6 @@ const formatDate = (date: string) =>
 const formatTime = (time: string) =>
     time ? new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
 
-const statusVariant = (status: string) => {
-    const map: Record<string, string> = {
-        pending: 'warning',
-        confirmed: 'info',
-        in_progress: 'info',
-        completed: 'success',
-        cancelled: 'destructive',
-    };
-    return map[status] || 'outline';
-};
-
-const statusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-        pending: 'Pending',
-        confirmed: 'Confirmed',
-        in_progress: 'In Progress',
-        completed: 'Completed',
-        cancelled: 'Cancelled',
-    };
-    return labels[status] ?? status;
-};
 
 const stepLabels = ['Pending', 'Confirmed', 'In Progress', 'Complete'];
 
@@ -150,8 +129,8 @@ const statusStep = (status: string) =>
                                         </template>
                                     </p>
                                 </div>
-                                <Badge :variant="statusVariant(booking.status)">
-                                    {{ statusLabel(booking.status) }}
+                                <Badge :variant="booking.status_variant">
+                                    {{ booking.status_label }}
                                 </Badge>
                             </div>
 

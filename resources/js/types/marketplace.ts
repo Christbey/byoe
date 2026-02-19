@@ -117,11 +117,14 @@ export interface ServiceRequest {
     end_time: string;
     price: number;
     status: 'pending_payment' | 'open' | 'filled' | 'expired' | 'cancelled';
+    status_label: string;
+    status_variant: string;
     expires_at: string;
     created_at: string;
     updated_at: string;
     shop_location?: ShopLocation;
     booking?: Booking;
+    distance?: number | null;
 }
 
 export interface Booking {
@@ -132,6 +135,8 @@ export interface Booking {
     platform_fee: number;
     provider_payout: number;
     status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+    status_label: string;
+    status_variant: string;
     accepted_at: string;
     completed_at?: string;
     cancelled_at?: string;

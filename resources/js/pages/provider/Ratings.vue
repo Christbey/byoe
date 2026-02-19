@@ -18,7 +18,6 @@ interface Stats {
 }
 
 interface Props {
-    needsProfile: boolean;
     ratings: PaginatedResponse<Rating> | Rating[];
     stats: Stats;
 }
@@ -62,12 +61,7 @@ const renderStars = (rating: number) => '★'.repeat(rating) + '☆'.repeat(5 - 
                 <p class="text-sm text-muted-foreground">See what coffee shops are saying about you</p>
             </div>
 
-            <div v-if="needsProfile" class="rounded-lg border border-dashed p-8 text-center">
-                <p class="text-muted-foreground">Create your provider profile to start receiving ratings.</p>
-            </div>
-
-            <template v-else>
-                <!-- Summary Cards -->
+            <!-- Summary Cards -->
                 <div class="grid gap-4 md:grid-cols-2">
                     <!-- Overall Rating -->
                     <Card>
@@ -142,7 +136,6 @@ const renderStars = (rating: number) => '★'.repeat(rating) + '☆'.repeat(5 - 
                 <div v-if="hasPagination && (ratings as PaginatedResponse<Rating>).current_page < (ratings as PaginatedResponse<Rating>).last_page" class="flex justify-center">
                     <Button variant="outline" @click="loadMore">Load More Reviews</Button>
                 </div>
-            </template>
         </div>
     </AppLayout>
 </template>

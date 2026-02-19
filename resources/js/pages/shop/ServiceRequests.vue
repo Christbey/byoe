@@ -128,46 +128,6 @@ const formatDate = (date: string) =>
 const formatTime = (time: string) =>
     new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
-// ─── Status helpers ───────────────────────────────────────────────────────────
-
-const requestStatusLabel = (request: ServiceRequest) => {
-    if (request.status === 'filled' && request.booking?.status === 'completed') return 'Completed';
-    return ({
-        pending_payment: 'Payment Required',
-        open: 'Open',
-        filled: 'Booked',
-        expired: 'Expired',
-        cancelled: 'Cancelled',
-    }[request.status] ?? request.status);
-};
-
-const requestStatusVariant = (request: ServiceRequest) => {
-    if (request.status === 'filled' && request.booking?.status === 'completed') return 'success';
-    return ({
-        pending_payment: 'warning',
-        open: 'info',
-        filled: 'outline',
-        expired: 'destructive',
-        cancelled: 'outline',
-    }[request.status] ?? 'outline');
-};
-
-const bookingStatusLabel = (status: string) => ({
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    in_progress: 'In Progress',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-}[status] ?? status);
-
-const bookingStatusVariant = (status: string) => ({
-    pending: 'warning',
-    confirmed: 'info',
-    in_progress: 'info',
-    completed: 'success',
-    cancelled: 'destructive',
-}[status] ?? 'outline');
-
 const stepLabels = ['Pending', 'Confirmed', 'In Progress', 'Complete'];
 const statusStep = (status: string) =>
     ({ pending: 1, confirmed: 2, in_progress: 3, completed: 4, cancelled: 0 }[status] ?? 0);
@@ -273,8 +233,8 @@ const statusStep = (status: string) =>
                                             </template>
                                         </p>
                                     </div>
-                                    <Badge :variant="requestStatusVariant(request)">
-                                        {{ requestStatusLabel(request) }}
+                                    <Badge :variant="request.status_variant">
+                                        {{ request.status_label }}
                                     </Badge>
                                 </div>
 
@@ -392,8 +352,8 @@ const statusStep = (status: string) =>
                                             </template>
                                         </p>
                                     </div>
-                                    <Badge :variant="bookingStatusVariant(booking.status)">
-                                        {{ bookingStatusLabel(booking.status) }}
+                                    <Badge :variant="booking.status_variant">
+                                        {{ booking.status_label }}
                                     </Badge>
                                 </div>
 

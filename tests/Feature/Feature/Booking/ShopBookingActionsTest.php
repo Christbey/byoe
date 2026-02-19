@@ -60,6 +60,7 @@ test('shop owner cannot cancel another shops booking', function () {
 
     $otherOwner = User::factory()->create();
     $otherOwner->assignRole('shop_owner');
+    Shop::factory()->create(['user_id' => $otherOwner->id]);
 
     $response = $this->actingAs($otherOwner)->delete("/shop/bookings/{$booking->id}");
 
@@ -127,6 +128,7 @@ test('shop owner cannot complete another shops booking', function () {
 
     $otherOwner = User::factory()->create();
     $otherOwner->assignRole('shop_owner');
+    Shop::factory()->create(['user_id' => $otherOwner->id]);
 
     $response = $this->actingAs($otherOwner)->post("/shop/bookings/{$booking->id}/complete");
 
@@ -226,6 +228,7 @@ test('shop owner cannot rate another shops booking', function () {
 
     $otherOwner = User::factory()->create();
     $otherOwner->assignRole('shop_owner');
+    Shop::factory()->create(['user_id' => $otherOwner->id]);
 
     $response = $this->actingAs($otherOwner)->post("/shop/bookings/{$booking->id}/rate", [
         'rating' => 3,

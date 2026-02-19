@@ -38,63 +38,73 @@ use Illuminate\Support\Facades\Route;
 
 // Shop/Buyer Portal
 Route::prefix('shop')->name('shop.')->middleware(['auth', 'verified', 'role:shop_owner|shop_manager|admin'])->group(function () {
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
-    Route::get('/profile', [ShopController::class, 'show'])->name('profile');
+    // Profile setup — available before a shop profile exists
     Route::get('/profile/edit', [ShopController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ShopController::class, 'update'])->name('profile.update');
 
-    // Locations Resource — index redirects to profile locations tab
-    Route::get('/locations', fn () => redirect()->route('shop.profile', ['tab' => 'locations']))->name('locations');
-    Route::resource('locations', LocationController::class)->except(['index']);
+    // All other shop routes — require an existing shop profile
+    Route::middleware('shop.profile')->group(function () {
+        Route::get('/dashboard', DashboardController::class)->name('dashboard');
+        Route::get('/profile', [ShopController::class, 'show'])->name('profile');
 
-    // Service Requests Resource
-    Route::resource('service-requests', ServiceRequestController::class)->except(['edit', 'update']);
-    Route::post('/service-requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'destroy'])->name('service-requests.cancel');
-    Route::post('/service-requests/{serviceRequest}/confirm-payment', [ServiceRequestController::class, 'confirmPayment'])->name('service-requests.confirm-payment');
+        // Locations Resource — index redirects to profile locations tab
+        Route::get('/locations', fn () => redirect()->route('shop.profile', ['tab' => 'locations']))->name('locations');
+        Route::resource('locations', LocationController::class)->except(['index']);
 
-    // Bookings Resource
-    Route::resource('bookings', BookingController::class)->only(['index', 'show', 'destroy']);
-    Route::post('/bookings/{booking}/complete', [BookingController::class, 'complete'])->name('bookings.complete');
-    Route::post('/bookings/{booking}/rate', [BookingController::class, 'rate'])->name('bookings.rate');
+        // Service Requests Resource
+        Route::resource('service-requests', ServiceRequestController::class)->except(['edit', 'update']);
+        Route::post('/service-requests/{serviceRequest}/cancel', [ServiceRequestController::class, 'destroy'])->name('service-requests.cancel');
+        Route::post('/service-requests/{serviceRequest}/confirm-payment', [ServiceRequestController::class, 'confirmPayment'])->name('service-requests.confirm-payment');
 
-    // Payments Resource
-    Route::resource('payments', PaymentController::class)->only(['index']);
-    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+        // Bookings Resource
+        Route::resource('bookings', BookingController::class)->only(['index', 'show', 'destroy']);
+        Route::post('/bookings/{booking}/complete', [BookingController::class, 'complete'])->name('bookings.complete');
+        Route::post('/bookings/{booking}/rate', [BookingController::class, 'rate'])->name('bookings.rate');
 
-    // Payment Method Management — page redirects to payments method tab
-    Route::get('/payment', fn () => redirect()->route('shop.payments.index', ['tab' => 'method']))->name('payment');
-    Route::post('/payment/save', PaymentMethodSaveController::class)->name('payment.save');
+        // Payments Resource
+        Route::resource('payments', PaymentController::class)->only(['index']);
+        Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+
+        // Payment Method Management — page redirects to payments method tab
+        Route::get('/payment', fn () => redirect()->route('shop.payments.index', ['tab' => 'method']))->name('payment');
+        Route::post('/payment/save', PaymentMethodSaveController::class)->name('payment.save');
+    });
 });
 
 // Provider Portal
 Route::prefix('provider')->name('provider.')->middleware(['auth', 'verified', 'role:provider|admin'])->group(function () {
-    Route::get('/dashboard', ProviderDashboardController::class)->name('dashboard');
-    Route::get('/profile', [ProviderProfileController::class, 'show'])->name('profile');
+    // Profile setup — available before a provider profile exists
     Route::get('/profile/edit', [ProviderProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProviderProfileController::class, 'update'])->name('profile.update');
-    Route::get('/available-requests', AvailableRequestsController::class)->name('available-requests');
-    Route::post('/requests/{serviceRequest}/accept', AcceptServiceRequestController::class)->name('requests.accept');
 
-    // Bookings Resource
-    Route::resource('bookings', ProviderBookingController::class)->only(['index', 'show']);
-    Route::post('/bookings/{booking}/complete', CompleteBookingController::class)->name('bookings.complete');
-    Route::post('/bookings/{booking}/rate', [ProviderBookingController::class, 'rate'])->name('bookings.rate');
+    // All other provider routes — require an existing provider profile
+    Route::middleware('provider.profile')->group(function () {
+        Route::get('/dashboard', ProviderDashboardController::class)->name('dashboard');
+        Route::get('/profile', [ProviderProfileController::class, 'show'])->name('profile');
+        Route::get('/available-requests', AvailableRequestsController::class)->name('available-requests');
+        Route::post('/requests/{serviceRequest}/accept', AcceptServiceRequestController::class)->name('requests.accept');
 
-    Route::get('/earnings', EarningsController::class)->name('earnings');
-    // Legacy redirects — payouts and ratings are now embedded in their respective pages
-    Route::get('/payouts', fn () => redirect()->route('provider.earnings', ['tab' => 'payouts']))->name('payouts');
-    Route::get('/ratings', fn () => redirect()->route('provider.profile'))->name('ratings');
-    Route::get('/availability', fn () => redirect()->route('provider.profile'))->name('availability');
-    Route::put('/availability', [AvailabilityController::class, 'update'])->name('availability.update');
+        // Bookings Resource
+        Route::resource('bookings', ProviderBookingController::class)->only(['index', 'show']);
+        Route::post('/bookings/{booking}/complete', CompleteBookingController::class)->name('bookings.complete');
+        Route::post('/bookings/{booking}/rate', [ProviderBookingController::class, 'rate'])->name('bookings.rate');
 
-    Route::get('/certifications', [CertificationsController::class, 'show'])->name('certifications');
-    Route::post('/certifications', [CertificationsController::class, 'store'])->name('certifications.store');
-    Route::delete('/certifications/{certId}', [CertificationsController::class, 'destroy'])->name('certifications.destroy');
+        Route::get('/earnings', EarningsController::class)->name('earnings');
+        // Legacy redirects — payouts and ratings are now embedded in their respective pages
+        Route::get('/payouts', fn () => redirect()->route('provider.earnings', ['tab' => 'payouts']))->name('payouts');
+        Route::get('/ratings', fn () => redirect()->route('provider.profile'))->name('ratings');
+        Route::get('/availability', fn () => redirect()->route('provider.profile'))->name('availability');
+        Route::put('/availability', [AvailabilityController::class, 'update'])->name('availability.update');
 
-    Route::get('/stripe-setup', StripeSetupController::class)->name('stripe-setup');
-    Route::post('/stripe-setup/session', StripeSetupSessionController::class)->name('stripe-setup.session');
-    Route::post('/stripe-setup/dashboard-link', StripeSetupDashboardLinkController::class)->name('stripe-setup.dashboard-link');
-    Route::post('/stripe-setup/sync', StripeSetupSyncController::class)->name('stripe-setup.sync');
+        Route::get('/certifications', [CertificationsController::class, 'show'])->name('certifications');
+        Route::post('/certifications', [CertificationsController::class, 'store'])->name('certifications.store');
+        Route::delete('/certifications/{certId}', [CertificationsController::class, 'destroy'])->name('certifications.destroy');
+
+        Route::get('/stripe-setup', StripeSetupController::class)->name('stripe-setup');
+        Route::post('/stripe-setup/session', StripeSetupSessionController::class)->name('stripe-setup.session');
+        Route::post('/stripe-setup/dashboard-link', StripeSetupDashboardLinkController::class)->name('stripe-setup.dashboard-link');
+        Route::post('/stripe-setup/sync', StripeSetupSyncController::class)->name('stripe-setup.sync');
+    });
 });
 
 // Admin Portal

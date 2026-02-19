@@ -35,6 +35,7 @@ return [
     'nominatim' => [
         'url' => env('NOMINATIM_URL', 'https://nominatim.openstreetmap.org'),
         'user_agent' => env('NOMINATIM_USER_AGENT', config('app.name')),
+        'rate_limit_per_second' => env('NOMINATIM_RATE_LIMIT', 1),
     ],
 
     /*
@@ -58,4 +59,20 @@ return [
     |
     */
     'distance_unit' => env('GEO_DISTANCE_UNIT', 'miles'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Geocoding Cache
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for caching geocoding results.
+    |
+    */
+    'cache' => [
+        'enabled' => env('GEO_CACHE_ENABLED', true),
+        'ttl_days' => env('GEO_CACHE_TTL_DAYS', 30),
+    ],
+
+    'earth_radius_miles' => 3958.8,
+    'search_radius_miles' => env('GEO_SEARCH_RADIUS_MILES', 25),
 ];

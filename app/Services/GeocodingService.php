@@ -8,7 +8,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -23,13 +22,14 @@ use Illuminate\Support\Facades\Log;
 class GeocodingService
 {
     private Client $client;
+
     private static ?int $lastRequestTime = null;
 
     /**
      * Create a new GeocodingService instance.
      */
     public function __construct(
-        private readonly Client $httpClient = new Client(),
+        private readonly Client $httpClient = new Client,
     ) {
         $this->client = $httpClient;
     }
@@ -41,13 +41,13 @@ class GeocodingService
      * to geographic coordinates. Results are cached to avoid repeated API calls.
      * Respects Nominatim's rate limit of 1 request per second.
      *
-     * @param ShopLocation $location The shop location to geocode
+     * @param  ShopLocation  $location  The shop location to geocode
      * @return bool True if geocoding was successful, false otherwise
      */
     public function geocodeLocation(ShopLocation $location): bool
     {
         $address = $location->fullAddress();
-        $cacheKey = 'geocode:' . md5($address);
+        $cacheKey = 'geocode:'.md5($address);
 
         // Check if we have a cached result
         if (config('geo.cache.enabled')) {
@@ -58,6 +58,7 @@ class GeocodingService
                     'longitude' => $cached['lon'],
                     'geocoded_at' => now(),
                 ]);
+
                 return true;
             }
         }
@@ -66,7 +67,7 @@ class GeocodingService
             // Respect Nominatim rate limit (1 request per second)
             $this->respectRateLimit();
 
-            $response = $this->client->get(config('geo.nominatim.base_url') . '/search', [
+            $response = $this->client->get(config('geo.nominatim.base_url').'/search', [
                 'query' => [
                     'q' => $address,
                     'format' => 'json',
@@ -81,6 +82,7 @@ class GeocodingService
 
             if (empty($results)) {
                 Log::warning('Geocoding failed: No results found', ['address' => $address]);
+
                 return false;
             }
 
@@ -107,12 +109,14 @@ class GeocodingService
                 'address' => $address,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         } catch (\Exception $e) {
             Log::error('Geocoding error', [
                 'address' => $address,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -123,10 +127,10 @@ class GeocodingService
      * The Haversine formula calculates the great-circle distance between two points
      * on a sphere given their longitudes and latitudes.
      *
-     * @param float $lat1 Latitude of the first point
-     * @param float $lon1 Longitude of the first point
-     * @param float $lat2 Latitude of the second point
-     * @param float $lon2 Longitude of the second point
+     * @param  float  $lat1  Latitude of the first point
+     * @param  float  $lon1  Longitude of the first point
+     * @param  float  $lat2  Latitude of the second point
+     * @param  float  $lon2  Longitude of the second point
      * @return float Distance in miles
      */
     public function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
@@ -159,8 +163,8 @@ class GeocodingService
      * the specified location and radius. Uses a bounding box query for efficiency,
      * then filters by exact distance calculation.
      *
-     * @param ShopLocation $location The shop location to search around
-     * @param int|null $radiusMiles The search radius in miles (uses config default if null)
+     * @param  ShopLocation  $location  The shop location to search around
+     * @param  int|null  $radiusMiles  The search radius in miles (uses config default if null)
      * @return Collection<Provider> Collection of nearby providers with distance attribute
      */
     public function findNearbyProviders(ShopLocation $location, ?int $radiusMiles = null): Collection
@@ -168,8 +172,8 @@ class GeocodingService
         $radius = $radiusMiles ?? config('geo.search_radius_miles');
 
         // Ensure the location is geocoded
-        if (!$location->latitude || !$location->longitude) {
-            if (!$this->geocodeLocation($location)) {
+        if (! $location->latitude || ! $location->longitude) {
+            if (! $this->geocodeLocation($location)) {
                 return collect();
             }
         }
@@ -193,14 +197,15 @@ class GeocodingService
             ->where('is_active', true)
             ->with('user')
             ->get()
-            ->map(function (Provider $provider) use ($lat, $lon) {
+            ->map(function (Provider $provider) {
                 // Get provider's home location (assuming providers have a home_latitude/home_longitude)
                 // For now, we'll just return providers and add distance calculation
                 // You may need to adjust this based on how provider locations are stored
                 $provider->distance = null;
+
                 return $provider;
             })
-            ->filter(function (Provider $provider) use ($radius) {
+            ->filter(function (Provider $provider) {
                 // Filter by actual distance if provider has coordinates
                 return true; // Adjust based on your provider location logic
             });
@@ -209,14 +214,44 @@ class GeocodingService
     }
 
     /**
-     * Respect Nominatim's rate limit of 1 request per second.
+     * Geocode a US zip code to latitude/longitude coordinates.
      *
-     * @return void
+     * Results are cached for 30 days to avoid repeated API calls.
+     *
+     * @param  string  $zip  The zip code to geocode
+     * @return array{lat: float, lng: float}|null Coordinates or null on failure
+     */
+    public function geocodeZip(string $zip): ?array
+    {
+        $cacheKey = 'geocode_zip:'.$zip;
+        $ttl = now()->addDays((int) config('geo.cache.ttl_days', 30));
+
+        return Cache::remember($cacheKey, $ttl, function () use ($zip) {
+            $this->respectRateLimit();
+            try {
+                $response = $this->client->get(config('geo.nominatim.url').'/search', [
+                    'query' => ['postalcode' => $zip, 'country' => 'US', 'format' => 'json', 'limit' => 1],
+                    'headers' => ['User-Agent' => config('geo.nominatim.user_agent')],
+                ]);
+                $results = json_decode($response->getBody()->getContents(), true);
+                if (! empty($results)) {
+                    return ['lat' => (float) $results[0]['lat'], 'lng' => (float) $results[0]['lon']];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Zip geocoding failed', ['zip' => $zip, 'error' => $e->getMessage()]);
+            }
+
+            return null;
+        });
+    }
+
+    /**
+     * Respect Nominatim's rate limit of 1 request per second.
      */
     private function respectRateLimit(): void
     {
-        $rateLimit = config('geo.nominatim.rate_limit_per_second');
-        $minDelay = (int) (1000000 / $rateLimit); // microseconds
+        $rateLimit = (int) config('geo.nominatim.rate_limit_per_second', 1);
+        $minDelay = (int) (1000000 / max(1, $rateLimit)); // microseconds
 
         if (self::$lastRequestTime !== null) {
             $elapsed = (int) ((microtime(true) * 1000000) - self::$lastRequestTime);

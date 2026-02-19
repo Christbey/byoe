@@ -38,7 +38,6 @@ interface Props {
     payouts: PaginatedResponse<Payout>;
     stats: PayoutStats;
     filter: string;
-    needsProfile?: boolean;
     stripeReady?: boolean;
 }
 

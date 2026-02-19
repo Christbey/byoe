@@ -59,48 +59,7 @@ const formatTime = (time: string) => {
     });
 };
 
-const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-        pending_payment: 'warning',
-        open: 'info',
-        filled: 'outline',
-        expired: 'destructive',
-        cancelled: 'outline',
-        pending: 'warning',
-        confirmed: 'info',
-        in_progress: 'info',
-        completed: 'success',
-    };
-    return colors[status] || 'outline';
-};
 
-const requestStatusLabel = (request: ServiceRequest) => {
-    if (request.status === 'filled' && request.booking?.status === 'completed') return 'Completed';
-    const labels: Record<string, string> = {
-        pending_payment: 'Payment Required',
-        open: 'Open',
-        filled: 'Booked',
-        expired: 'Expired',
-        cancelled: 'Cancelled',
-    };
-    return labels[request.status] ?? request.status;
-};
-
-const requestStatusVariant = (request: ServiceRequest) => {
-    if (request.status === 'filled' && request.booking?.status === 'completed') return 'success';
-    return getStatusColor(request.status);
-};
-
-const bookingStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-        pending: 'Pending',
-        confirmed: 'Confirmed',
-        in_progress: 'In Progress',
-        completed: 'Completed',
-        cancelled: 'Cancelled',
-    };
-    return labels[status] ?? status;
-};
 </script>
 
 <template>
@@ -227,10 +186,10 @@ const bookingStatusLabel = (status: string) => {
                                         </p>
                                     </div>
                                     <Badge
-                                        :variant="requestStatusVariant(request)"
+                                        :variant="request.status_variant"
                                         class="shrink-0"
                                     >
-                                        {{ requestStatusLabel(request) }}
+                                        {{ request.status_label }}
                                     </Badge>
                                 </div>
                                 <div class="flex items-center justify-between">
@@ -308,10 +267,10 @@ const bookingStatusLabel = (status: string) => {
                                         </p>
                                     </div>
                                     <Badge
-                                        :variant="getStatusColor(booking.status)"
+                                        :variant="booking.status_variant"
                                         class="shrink-0"
                                     >
-                                        {{ bookingStatusLabel(booking.status) }}
+                                        {{ booking.status_label }}
                                     </Badge>
                                 </div>
                                 <div class="flex items-center justify-between">

@@ -31,7 +31,6 @@ interface ShopStats {
 
 interface Props {
     view: 'provider' | 'shop' | 'default';
-    needsProfile?: boolean;
     // Provider props
     stats?: ProviderStats | ShopStats;
     upcoming_bookings?: Booking[];
@@ -41,7 +40,6 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    needsProfile: false,
     upcoming_bookings: () => [],
     recent_activity: () => [],
     recent_requests: () => [],
@@ -64,14 +62,6 @@ const formatTime = (time: string) => {
     return new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 };
 
-const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-        open: 'default', filled: 'secondary', expired: 'destructive',
-        cancelled: 'outline', pending: 'default', confirmed: 'default',
-        completed: 'secondary', in_progress: 'default',
-    };
-    return colors[status] || 'outline';
-};
 
 const providerStats = () => props.stats as ProviderStats;
 const shopStats = () => props.stats as ShopStats;
@@ -90,18 +80,7 @@ const shopStats = () => props.stats as ShopStats;
                     <p class="text-sm text-muted-foreground">Track your earnings and upcoming bookings</p>
                 </div>
 
-                <!-- Needs Profile Banner -->
-                <Card v-if="needsProfile" class="border-dashed border-primary/40">
-                    <CardContent class="py-10 text-center space-y-3">
-                        <p class="font-semibold">Complete your provider profile to start accepting requests</p>
-                        <Link href="/provider/profile/edit">
-                            <Button>Set Up Profile</Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-
-                <template v-else>
-                    <!-- Earnings Row -->
+                <!-- Earnings Row -->
                     <div class="grid gap-4 md:grid-cols-3">
                         <Card class="border-primary/30">
                             <CardHeader class="pb-2">
@@ -202,7 +181,6 @@ const shopStats = () => props.stats as ShopStats;
                             </div>
                         </CardContent>
                     </Card>
-                </template>
             </template>
 
             <!-- ════════════════════════════════════════ SHOP VIEW ═══════ -->
@@ -273,7 +251,7 @@ const shopStats = () => props.stats as ShopStats;
                                         </p>
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <Badge :variant="getStatusColor(request.status)">{{ request.status }}</Badge>
+                                        <Badge :variant="request.status_variant">{{ request.status_label }}</Badge>
                                         <Link :href="`/shop/service-requests/${request.id}`">
                                             <Button variant="ghost" size="sm">View</Button>
                                         </Link>
@@ -314,7 +292,7 @@ const shopStats = () => props.stats as ShopStats;
                                         </p>
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <Badge :variant="getStatusColor(booking.status)">{{ booking.status }}</Badge>
+                                        <Badge :variant="booking.status_variant">{{ booking.status_label }}</Badge>
                                         <Link :href="`/shop/bookings/${booking.id}`">
                                             <Button variant="ghost" size="sm">View</Button>
                                         </Link>

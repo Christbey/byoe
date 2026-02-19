@@ -18,6 +18,11 @@ class ServiceRequest extends Model
      *
      * @var list<string>
      */
+    /**
+     * @var list<string>
+     */
+    protected $appends = ['status_label', 'status_variant'];
+
     protected $fillable = [
         'shop_location_id',
         'title',
@@ -77,6 +82,43 @@ class ServiceRequest extends Model
     /**
      * Check if the service request is open.
      */
+    /**
+     * Human-readable label for the service request status.
+     * If the request is filled and its booking is completed, surfaces "Completed".
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        if ($this->status === 'filled' && $this->relationLoaded('booking') && $this->booking?->status === 'completed') {
+            return 'Completed';
+        }
+
+        return match ($this->status) {
+            'pending_payment' => 'Payment Required',
+            'open' => 'Open',
+            'filled' => 'Booked',
+            'expired' => 'Expired',
+            'cancelled' => 'Cancelled',
+            default => ucfirst(str_replace('_', ' ', $this->status)),
+        };
+    }
+
+    /**
+     * Badge variant for the service request status.
+     */
+    public function getStatusVariantAttribute(): string
+    {
+        if ($this->status === 'filled' && $this->relationLoaded('booking') && $this->booking?->status === 'completed') {
+            return 'success';
+        }
+
+        return match ($this->status) {
+            'pending_payment' => 'warning',
+            'open' => 'info',
+            'expired' => 'destructive',
+            default => 'outline',
+        };
+    }
+
     public function isPendingPayment(): bool
     {
         return $this->status === 'pending_payment';

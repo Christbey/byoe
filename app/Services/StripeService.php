@@ -104,8 +104,7 @@ class StripeService
      * the <stripe-connect-account-onboarding> embedded component. The session
      * lasts ~1 hour; the fetchClientSecret callback re-calls this method if it expires.
      *
-     * @param  Provider  $provider
-     * @return string  The account session client_secret
+     * @return string The account session client_secret
      *
      * @throws \Exception If session creation fails
      */
@@ -148,8 +147,7 @@ class StripeService
      * view their balance, payout history, and 1099 tax documents. The link is
      * single-use and expires after a short time.
      *
-     * @param  Provider  $provider
-     * @return string  The Express Dashboard URL
+     * @return string The Express Dashboard URL
      *
      * @throws \Exception If link creation fails or account is not onboarded
      */
@@ -413,8 +411,6 @@ class StripeService
      * moving the held funds into the platform account. A payout to the
      * provider is handled separately via processPayout().
      *
-     * @param  \App\Models\ServiceRequest  $serviceRequest
-     * @param  Booking  $booking
      *
      * @throws \Exception
      */
@@ -541,6 +537,93 @@ class StripeService
      *
      * @throws \Exception If processing fails
      */
+    /**
+     * Check whether a service request's PaymentIntent is in requires_capture state.
+     *
+     * Used after authorization to determine if the request can be opened immediately
+     * (saved card, off-session confirm) or needs the shop to complete payment on-site.
+     */
+    /**
+     * Sync a provider's Stripe account status from the Stripe API into the database.
+     *
+     * Called after the embedded onboarding component's onExit fires so the database
+     * reflects the latest state before the page reloads — without waiting for the
+     * account.updated webhook to arrive.
+     *
+     * @return array{charges_enabled: bool, payouts_enabled: bool, details_submitted: bool}
+     */
+    public function syncStripeAccount(ProviderStripeAccount $stripeAccount): array
+    {
+        $account = Account::retrieve($stripeAccount->stripe_account_id);
+
+        $updates = [
+            'charges_enabled' => $account->charges_enabled ?? false,
+            'payouts_enabled' => $account->payouts_enabled ?? false,
+            'details_submitted' => $account->details_submitted ?? false,
+        ];
+
+        if (
+            ($account->charges_enabled ?? false) &&
+            ($account->payouts_enabled ?? false) &&
+            ($account->details_submitted ?? false) &&
+            ! $stripeAccount->onboarding_completed_at
+        ) {
+            $updates['onboarding_completed_at'] = now();
+        }
+
+        $stripeAccount->update($updates);
+
+        return [
+            'charges_enabled' => $account->charges_enabled ?? false,
+            'payouts_enabled' => $account->payouts_enabled ?? false,
+            'details_submitted' => $account->details_submitted ?? false,
+        ];
+    }
+
+    public function paymentIntentRequiresCapture(\App\Models\ServiceRequest $serviceRequest): bool
+    {
+        if (! $serviceRequest->stripe_payment_intent_id) {
+            return false;
+        }
+
+        try {
+            $pi = PaymentIntent::retrieve($serviceRequest->stripe_payment_intent_id);
+
+            return $pi->status === 'requires_capture';
+        } catch (ApiErrorException $e) {
+            Log::error('Failed to retrieve PaymentIntent status', [
+                'service_request_id' => $serviceRequest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Cancel a PaymentIntent if it is in a cancellable state.
+     *
+     * Silently logs a warning if cancellation fails so the caller can continue
+     * with request cancellation regardless.
+     */
+    public function cancelPaymentIntentIfCancellable(string $paymentIntentId): void
+    {
+        $cancellableStatuses = ['requires_payment_method', 'requires_confirmation', 'requires_capture'];
+
+        try {
+            $pi = PaymentIntent::retrieve($paymentIntentId);
+
+            if (in_array($pi->status, $cancellableStatuses)) {
+                PaymentIntent::cancel($paymentIntentId);
+            }
+        } catch (ApiErrorException $e) {
+            Log::warning('Failed to cancel Stripe PaymentIntent', [
+                'payment_intent_id' => $paymentIntentId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function handlePaymentIntentSucceeded($paymentIntent): void
     {
         try {

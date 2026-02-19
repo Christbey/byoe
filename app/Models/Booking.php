@@ -32,6 +32,11 @@ class Booking extends Model
     ];
 
     /**
+     * @var list<string>
+     */
+    protected $appends = ['status_label', 'status_variant'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -173,6 +178,35 @@ class Booking extends Model
             'cancelled_at' => now(),
             'cancellation_reason' => $reason,
         ]);
+    }
+
+    /**
+     * Human-readable label for the booking status.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'Pending Payment',
+            'confirmed' => 'Confirmed',
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            default => ucfirst(str_replace('_', ' ', $this->status)),
+        };
+    }
+
+    /**
+     * Badge variant for the booking status.
+     */
+    public function getStatusVariantAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'warning',
+            'confirmed', 'in_progress' => 'info',
+            'completed' => 'success',
+            'cancelled' => 'destructive',
+            default => 'outline',
+        };
     }
 
     /**

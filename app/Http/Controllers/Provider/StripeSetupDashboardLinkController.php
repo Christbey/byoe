@@ -25,10 +25,6 @@ class StripeSetupDashboardLinkController extends Controller
     {
         $provider = $request->user()->provider;
 
-        if (! $provider) {
-            return response()->json(['error' => 'Provider profile not found.'], 404);
-        }
-
         try {
             $url = $this->stripeService->createExpressDashboardLink($provider);
 
