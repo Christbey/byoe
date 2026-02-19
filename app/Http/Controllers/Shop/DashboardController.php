@@ -29,6 +29,7 @@ class DashboardController extends Controller
         if (! $shop) {
             // User has no shop yet, return empty dashboard
             return Inertia::render('shop/Dashboard', [
+                'shopName' => null,
                 'stats' => [
                     'active_requests' => 0,
                     'upcoming_bookings' => 0,
@@ -81,6 +82,7 @@ class DashboardController extends Controller
             ->get();
 
         return Inertia::render('shop/Dashboard', [
+            'shopName' => $shop->name,
             'stats' => [
                 'active_requests' => $activeRequestsCount,
                 'upcoming_bookings' => $upcomingBookingsCount,

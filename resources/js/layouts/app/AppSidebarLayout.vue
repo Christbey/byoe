@@ -77,7 +77,7 @@ watch(
             >
                 <div
                     v-if="toast"
-                    class="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
+                    class="fixed bottom-safe-4 right-safe-4 z-50 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
                     :class="toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-destructive text-destructive-foreground'"
                 >
                     <svg v-if="toast.type === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0">

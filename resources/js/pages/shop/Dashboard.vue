@@ -20,12 +20,15 @@ interface DashboardStats {
 }
 
 interface Props {
+    shopName: string | null;
     stats: DashboardStats;
     recent_requests: ServiceRequest[];
     upcoming_bookings: Booking[];
 }
 
 const props = defineProps<Props>();
+
+const pageTitle = computed(() => (props.shopName ? `${props.shopName} Dashboard` : 'Shop Dashboard'));
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -92,14 +95,14 @@ const bookingStatusLabel = (status: string) => {
 </script>
 
 <template>
-    <Head title="Shop Dashboard" />
+    <Head :title="pageTitle" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
             <!-- Header -->
             <div class="space-y-2">
                 <h1 class="text-2xl font-bold tracking-tight md:text-3xl">
-                    Shop Dashboard
+                    {{ pageTitle }}
                 </h1>
                 <p class="text-sm text-muted-foreground md:text-base">
                     Overview of your service requests and bookings
