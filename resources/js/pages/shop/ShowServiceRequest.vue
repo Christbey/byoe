@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import Badge from '@/components/ui/badge/Badge.vue';
 import PageHelp from '@/components/marketplace/PageHelp.vue';
 import PaymentForm from '@/components/marketplace/PaymentForm.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 interface Props {
     serviceRequest: ServiceRequest;
@@ -96,6 +96,21 @@ const bookingStatusLabel = (status: string) => {
     return labels[status] ?? status;
 };
 
+// When a request is 'filled' and its booking is 'completed', surface that as the effective status
+const requestLabel = computed(() => {
+    if (props.serviceRequest.status === 'filled' && props.serviceRequest.booking?.status === 'completed') {
+        return 'Completed';
+    }
+    return requestStatusLabel(props.serviceRequest.status);
+});
+
+const requestVariant = computed(() => {
+    if (props.serviceRequest.status === 'filled' && props.serviceRequest.booking?.status === 'completed') {
+        return 'success';
+    }
+    return getStatusColor(props.serviceRequest.status);
+});
+
 const handleCancelRequest = () => {
     if (
         confirm(
@@ -132,8 +147,8 @@ const handlePaymentSuccess = () => {
                         <h1 class="text-2xl font-bold tracking-tight md:text-3xl">
                             {{ serviceRequest.title }}
                         </h1>
-                        <Badge :variant="getStatusColor(serviceRequest.status)">
-                            {{ requestStatusLabel(serviceRequest.status) }}
+                        <Badge :variant="requestVariant">
+                            {{ requestLabel }}
                         </Badge>
                     </div>
                     <p class="text-sm text-muted-foreground md:text-base">
@@ -223,72 +238,44 @@ const handlePaymentSuccess = () => {
                         </CardContent>
                     </Card>
 
-                    <!-- Description -->
+                    <!-- Request Details: description + skills + location -->
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Description</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-sm whitespace-pre-wrap">
-                                {{ serviceRequest.description }}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Skills Required -->
-                    <Card
-                        v-if="serviceRequest.skills_required && serviceRequest.skills_required.length > 0"
-                    >
-                        <CardHeader>
-                            <CardTitle>Skills Required</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div class="flex flex-wrap gap-2">
-                                <Badge
-                                    v-for="skill in serviceRequest.skills_required"
-                                    :key="skill"
-                                    variant="outline"
-                                >
-                                    {{ skill }}
-                                </Badge>
+                        <CardContent class="divide-y divide-border text-sm">
+                            <!-- Description -->
+                            <div class="py-4 first:pt-0 last:pb-0">
+                                <p class="font-medium text-muted-foreground mb-1">Description</p>
+                                <p class="whitespace-pre-wrap">{{ serviceRequest.description }}</p>
                             </div>
-                        </CardContent>
-                    </Card>
 
-                    <!-- Location -->
-                    <Card v-if="serviceRequest.shop_location">
-                        <CardHeader>
-                            <CardTitle>Location</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div class="flex items-start gap-3">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                    class="size-5 shrink-0 text-muted-foreground mt-0.5"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
-                                <div class="text-sm">
-                                    <p class="text-muted-foreground">
-                                        {{ serviceRequest.shop_location.address_line_1 }}
-                                    </p>
-                                    <p
-                                        v-if="serviceRequest.shop_location.address_line_2"
-                                        class="text-muted-foreground"
+                            <!-- Skills -->
+                            <div
+                                v-if="serviceRequest.skills_required && serviceRequest.skills_required.length > 0"
+                                class="py-4 first:pt-0 last:pb-0"
+                            >
+                                <p class="font-medium text-muted-foreground mb-2">Skills Required</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <Badge
+                                        v-for="skill in serviceRequest.skills_required"
+                                        :key="skill"
+                                        variant="outline"
                                     >
-                                        {{ serviceRequest.shop_location.address_line_2 }}
-                                    </p>
-                                    <p class="text-muted-foreground">
-                                        {{ serviceRequest.shop_location.city }},
-                                        {{ serviceRequest.shop_location.state }}
-                                        {{ serviceRequest.shop_location.zip_code }}
-                                    </p>
+                                        {{ skill }}
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            <!-- Location -->
+                            <div v-if="serviceRequest.shop_location" class="py-4 first:pt-0 last:pb-0">
+                                <p class="font-medium text-muted-foreground mb-2">Location</p>
+                                <div class="flex items-start gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0 text-muted-foreground mt-0.5">
+                                        <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div class="text-muted-foreground">
+                                        <p>{{ serviceRequest.shop_location.address_line_1 }}</p>
+                                        <p v-if="serviceRequest.shop_location.address_line_2">{{ serviceRequest.shop_location.address_line_2 }}</p>
+                                        <p>{{ serviceRequest.shop_location.city }}, {{ serviceRequest.shop_location.state }} {{ serviceRequest.shop_location.zip_code }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
@@ -354,74 +341,35 @@ const handlePaymentSuccess = () => {
                 </div>
 
                 <!-- Right Column - Summary -->
-                <div class="space-y-4">
-                    <!-- Schedule & Price -->
+                <div>
+                    <!-- Schedule, Price & Status combined -->
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Schedule & Price</CardTitle>
-                        </CardHeader>
-                        <CardContent class="space-y-4">
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Service Date
-                                </p>
-                                <p class="text-lg font-semibold">
-                                    {{ formatDate(serviceRequest.service_date) }}
+                        <CardContent class="divide-y divide-border text-sm pt-4">
+                            <div class="pb-4">
+                                <p class="font-medium text-muted-foreground">Service Date</p>
+                                <p class="font-semibold mt-0.5">{{ formatDate(serviceRequest.service_date) }}</p>
+                            </div>
+                            <div class="py-4">
+                                <p class="font-medium text-muted-foreground">Time</p>
+                                <p class="font-semibold mt-0.5">
+                                    {{ formatDateTime(serviceRequest.start_time) }} – {{ formatDateTime(serviceRequest.end_time) }}
                                 </p>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Time
-                                </p>
-                                <p class="text-lg font-semibold">
-                                    {{ formatDateTime(serviceRequest.start_time) }}
-                                    -
-                                    {{ formatDateTime(serviceRequest.end_time) }}
-                                </p>
+                            <div class="py-4">
+                                <p class="font-medium text-muted-foreground">Total Price</p>
+                                <p class="text-base font-semibold mt-0.5">{{ formatCurrency(serviceRequest.price) }}</p>
                             </div>
-                            <div class="pt-2 border-t">
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Total Price
-                                </p>
-                                <p class="text-2xl font-bold">
-                                    {{ formatCurrency(serviceRequest.price) }}
-                                </p>
+                            <div class="py-4">
+                                <p class="font-medium text-muted-foreground">Status</p>
+                                <Badge :variant="requestVariant" class="mt-1">{{ requestLabel }}</Badge>
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Status Info -->
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Status</CardTitle>
-                        </CardHeader>
-                        <CardContent class="space-y-3">
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Current Status
-                                </p>
-                                <Badge
-                                    :variant="getStatusColor(serviceRequest.status)"
-                                    class="mt-1"
-                                >
-                                    {{ requestStatusLabel(serviceRequest.status) }}
-                                </Badge>
+                            <div v-if="serviceRequest.status === 'open'" class="py-4">
+                                <p class="font-medium text-muted-foreground">Expires</p>
+                                <p class="mt-0.5">{{ formatDateTime(serviceRequest.expires_at) }}</p>
                             </div>
-                            <div v-if="serviceRequest.status === 'open'">
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Expires
-                                </p>
-                                <p class="text-sm">
-                                    {{ formatDateTime(serviceRequest.expires_at) }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-muted-foreground">
-                                    Created
-                                </p>
-                                <p class="text-sm">
-                                    {{ formatDateTime(serviceRequest.created_at) }}
-                                </p>
+                            <div class="pt-4">
+                                <p class="font-medium text-muted-foreground">Posted</p>
+                                <p class="mt-0.5">{{ formatDateTime(serviceRequest.created_at) }}</p>
                             </div>
                         </CardContent>
                     </Card>

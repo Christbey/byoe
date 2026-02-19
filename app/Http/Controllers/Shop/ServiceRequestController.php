@@ -138,7 +138,7 @@ class ServiceRequestController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'skills_required' => ['nullable', 'array'],
-            'service_date' => ['required', 'date', 'after:today'],
+            'service_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i'],
         ]);
@@ -159,6 +159,14 @@ class ServiceRequestController extends Controller
         if (! $user->hasRole('admin') && $shopLocation->shop->user_id !== $user->id) {
             return redirect()->back()
                 ->withErrors(['shop_location_id' => 'You do not have permission to create requests for this location.'])
+                ->withInput();
+        }
+
+        // Enforce 2-hour minimum lead time from the current server time
+        $serviceStart = \Carbon\Carbon::parse($validated['service_date'].' '.$validated['start_time']);
+        if ($serviceStart->diffInMinutes(now(), false) > -120) {
+            return redirect()->back()
+                ->withErrors(['start_time' => 'The start time must be at least 2 hours from now.'])
                 ->withInput();
         }
 

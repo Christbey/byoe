@@ -33,7 +33,7 @@ return [
     */
     'booking_windows' => [
         // Minimum hours before service date that a booking can be made
-        'min_lead_time_hours' => env('MARKETPLACE_MIN_LEAD_TIME_HOURS', 4),
+        'min_lead_time_hours' => env('MARKETPLACE_MIN_LEAD_TIME_HOURS', 2),
 
         // Maximum hours in advance that a booking can be made
         'max_lead_time_hours' => env('MARKETPLACE_MAX_LEAD_TIME_HOURS', 2160), // 90 days

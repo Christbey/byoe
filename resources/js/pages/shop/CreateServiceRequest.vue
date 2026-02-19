@@ -130,7 +130,27 @@ const providerPayout = computed(() => {
 });
 
 // — Dates —
-const minDate = computed(() => new Date().toISOString().split('T')[0]);
+// Use local date (not UTC) so users in non-UTC timezones get the correct "today"
+const localDateString = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// Same-day requests are allowed; minimum is today (local date)
+const minDate = computed(() => localDateString(new Date()));
+
+// Enforce 2-hour minimum lead time from the user's current local time
+const MIN_LEAD_TIME_HOURS = 2;
+
+const dateTimeError = computed((): string | null => {
+    if (!form.service_date || !form.start_time) return null;
+    const [year, month, day] = form.service_date.split('-').map(Number);
+    const [h, m] = form.start_time.split(':').map(Number);
+    const serviceStart = new Date(year, month - 1, day, h, m);
+    const diffHours = (serviceStart.getTime() - Date.now()) / (1000 * 60 * 60);
+    if (diffHours < MIN_LEAD_TIME_HOURS) {
+        return `Start time must be at least ${MIN_LEAD_TIME_HOURS} hours from now.`;
+    }
+    return null;
+});
 
 // Formatted end time for display
 const displayEndTime = computed(() => {
@@ -153,7 +173,8 @@ const canSubmit = computed(() =>
     form.shop_location_id &&
     form.service_date &&
     form.start_time &&
-    selectedDuration.value !== null,
+    selectedDuration.value !== null &&
+    !dateTimeError.value,
 );
 
 const handleSubmit = () => {
@@ -310,6 +331,8 @@ const handleSubmit = () => {
                             <p v-if="form.errors.start_time" class="text-sm text-destructive">{{ form.errors.start_time }}</p>
                         </div>
                     </div>
+
+                    <p v-if="dateTimeError" class="text-sm text-destructive">{{ dateTimeError }}</p>
 
                     <!-- Duration selector -->
                     <div class="space-y-2">
