@@ -61,6 +61,7 @@ const formatTime = (time: string) => {
 
 const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
+        pending_payment: 'warning',
         open: 'info',
         filled: 'outline',
         expired: 'destructive',
@@ -73,14 +74,21 @@ const getStatusColor = (status: string) => {
     return colors[status] || 'outline';
 };
 
-const requestStatusLabel = (status: string) => {
+const requestStatusLabel = (request: ServiceRequest) => {
+    if (request.status === 'filled' && request.booking?.status === 'completed') return 'Completed';
     const labels: Record<string, string> = {
+        pending_payment: 'Payment Required',
         open: 'Open',
         filled: 'Booked',
         expired: 'Expired',
         cancelled: 'Cancelled',
     };
-    return labels[status] ?? status;
+    return labels[request.status] ?? request.status;
+};
+
+const requestStatusVariant = (request: ServiceRequest) => {
+    if (request.status === 'filled' && request.booking?.status === 'completed') return 'success';
+    return getStatusColor(request.status);
 };
 
 const bookingStatusLabel = (status: string) => {
@@ -219,10 +227,10 @@ const bookingStatusLabel = (status: string) => {
                                         </p>
                                     </div>
                                     <Badge
-                                        :variant="getStatusColor(request.status)"
+                                        :variant="requestStatusVariant(request)"
                                         class="shrink-0"
                                     >
-                                        {{ requestStatusLabel(request.status) }}
+                                        {{ requestStatusLabel(request) }}
                                     </Badge>
                                 </div>
                                 <div class="flex items-center justify-between">

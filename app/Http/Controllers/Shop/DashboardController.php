@@ -63,7 +63,7 @@ class DashboardController extends Controller
             ->sum('amount');
 
         // Get recent service requests (last 5)
-        $recentRequests = ServiceRequest::with(['shopLocation'])
+        $recentRequests = ServiceRequest::with(['shopLocation', 'booking'])
             ->whereIn('shop_location_id', $locationIds)
             ->orderBy('created_at', 'desc')
             ->limit(5)
