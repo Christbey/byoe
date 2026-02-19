@@ -85,10 +85,10 @@ const formatDate = (date: string) => {
 
 const getActionColor = (action: string) => {
     const colors: Record<string, string> = {
-        create: 'default',
-        update: 'secondary',
+        create: 'success',
+        update: 'info',
         delete: 'destructive',
-        login: 'default',
+        login: 'info',
         logout: 'outline',
     };
     return colors[action.toLowerCase()] || 'outline';

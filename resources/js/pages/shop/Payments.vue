@@ -94,7 +94,7 @@ const formatDate = (date: string) =>
     new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(date));
 
 const getStatusColor = (status: string) =>
-    ({ authorized: 'secondary', succeeded: 'default', pending: 'secondary', failed: 'destructive', refunded: 'outline' }[status] ?? 'outline');
+    ({ authorized: 'warning', succeeded: 'success', pending: 'warning', failed: 'destructive', refunded: 'outline' }[status] ?? 'outline');
 
 const statusLabel = (status: string) =>
     ({ authorized: 'On Hold', succeeded: 'Paid', pending: 'Pending', failed: 'Failed', refunded: 'Refunded', processing: 'Processing' }[status] ?? status);

@@ -61,13 +61,14 @@ const formatTime = (time: string) => {
 
 const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-        open: 'default',
-        filled: 'secondary',
+        open: 'info',
+        filled: 'outline',
         expired: 'destructive',
         cancelled: 'outline',
-        pending: 'default',
-        confirmed: 'default',
-        completed: 'secondary',
+        pending: 'warning',
+        confirmed: 'info',
+        in_progress: 'info',
+        completed: 'success',
     };
     return colors[status] || 'outline';
 };

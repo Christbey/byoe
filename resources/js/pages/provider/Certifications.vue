@@ -203,8 +203,8 @@ const certTypeLabel = (key: string) =>
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="font-semibold">{{ cert.name }}</span>
                                         <Badge v-if="isExpired(cert.expires_at)" variant="destructive" class="text-xs">Expired</Badge>
-                                        <Badge v-else-if="isExpiringSoon(cert.expires_at)" variant="secondary" class="text-xs">Expiring Soon</Badge>
-                                        <Badge v-else-if="cert.expires_at" variant="default" class="text-xs">Active</Badge>
+                                        <Badge v-else-if="isExpiringSoon(cert.expires_at)" variant="warning" class="text-xs">Expiring Soon</Badge>
+                                        <Badge v-else-if="cert.expires_at" variant="success" class="text-xs">Active</Badge>
                                     </div>
                                     <p class="text-sm text-muted-foreground">{{ certTypeLabel(cert.type) }}</p>
                                     <p v-if="cert.issuer" class="text-xs text-muted-foreground">{{ cert.issuer }}</p>

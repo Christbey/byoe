@@ -65,10 +65,10 @@ const submitRating = () => {
 
 const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-        pending: 'secondary',
-        confirmed: 'default',
-        in_progress: 'default',
-        completed: 'secondary',
+        pending: 'warning',
+        confirmed: 'info',
+        in_progress: 'info',
+        completed: 'success',
         cancelled: 'destructive',
     };
     return colors[status] || 'outline';
@@ -111,7 +111,7 @@ const shopName = props.booking.service_request?.shop_location?.shop?.name ?? 'Sh
                     <Button
                         v-if="['confirmed', 'in_progress'].includes(booking.status)"
                         :disabled="completing"
-                        variant="default"
+                        variant="success"
                         @click="completeBooking"
                     >
                         {{ completing ? 'Completing...' : 'Mark Complete' }}

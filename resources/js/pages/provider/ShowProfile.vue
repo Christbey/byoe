@@ -173,8 +173,8 @@ const starArray = [5, 4, 3, 2, 1];
                         <CardHeader>
                             <CardDescription>Payout Account</CardDescription>
                             <div class="flex items-center gap-2">
-                                <Badge v-if="isStripeOnboarded" variant="default">Connected</Badge>
-                                <Badge v-else variant="destructive">Setup Required</Badge>
+                                <Badge v-if="isStripeOnboarded" variant="success">Connected</Badge>
+                                <Badge v-else variant="warning">Setup Required</Badge>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -182,7 +182,7 @@ const starArray = [5, 4, 3, 2, 1];
                                 {{ isStripeOnboarded ? 'Your bank account is connected and ready' : 'Connect your bank account to receive earnings' }}
                             </p>
                             <Link v-if="!isStripeOnboarded" href="/provider/stripe-setup" class="mt-3 inline-block">
-                                <Button variant="outline" size="sm">Set Up Payouts</Button>
+                                <Button variant="warning" size="sm">Set Up Payouts</Button>
                             </Link>
                         </CardContent>
                     </Card>

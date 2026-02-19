@@ -50,10 +50,10 @@ const formatDateTime = (datetime: string) =>
 
 const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-        pending: 'secondary',
-        confirmed: 'default',
-        in_progress: 'default',
-        completed: 'secondary',
+        pending: 'warning',
+        confirmed: 'info',
+        in_progress: 'info',
+        completed: 'success',
         cancelled: 'destructive',
     };
     return colors[status] || 'outline';
@@ -133,6 +133,7 @@ const submitRating = () => {
                     <Button
                         v-if="booking.status === 'confirmed' || booking.status === 'in_progress'"
                         :disabled="isCompleting"
+                        variant="success"
                         @click="handleComplete"
                     >
                         {{ isCompleting ? 'Completing...' : 'Mark Complete' }}

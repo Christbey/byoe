@@ -94,9 +94,13 @@ const formatDate = (date: string | null | undefined) => {
 };
 
 const payoutStatusVariant = (status: string) => {
-    if (status === 'paid') return 'default';
-    if (status === 'failed') return 'destructive';
-    return 'secondary';
+    const map: Record<string, string> = {
+        scheduled: 'warning',
+        processing: 'info',
+        paid: 'success',
+        failed: 'destructive',
+    };
+    return map[status] ?? 'outline';
 };
 </script>
 

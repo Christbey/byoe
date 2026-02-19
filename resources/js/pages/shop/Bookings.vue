@@ -74,10 +74,10 @@ const formatTime = (time: string) =>
 
 const statusVariant = (status: string) => {
     const map: Record<string, string> = {
-        pending: 'secondary',
-        confirmed: 'default',
-        in_progress: 'default',
-        completed: 'secondary',
+        pending: 'warning',
+        confirmed: 'info',
+        in_progress: 'info',
+        completed: 'success',
         cancelled: 'destructive',
     };
     return map[status] || 'outline';

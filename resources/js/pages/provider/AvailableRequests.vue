@@ -229,7 +229,7 @@ onUnmounted(() => {
                             </p>
 
                             <div class="flex flex-col gap-2 sm:flex-row-reverse">
-                                <Button class="w-full sm:w-auto sm:flex-1" @click="confirmAccept">
+                                <Button variant="success" class="w-full sm:w-auto sm:flex-1" @click="confirmAccept">
                                     Yes, Accept Request
                                 </Button>
                                 <Button variant="outline" class="w-full sm:w-auto sm:flex-1" @click="cancelConfirm">

@@ -37,7 +37,7 @@ const maskEin = (ein: string) => {
 };
 
 const statusVariant = (status: string) => {
-    const map: Record<string, string> = { active: 'default', inactive: 'secondary', suspended: 'destructive' };
+    const map: Record<string, string> = { active: 'success', inactive: 'secondary', suspended: 'destructive' };
     return map[status] || 'outline';
 };
 
@@ -51,9 +51,9 @@ const formatAddress = (location: ShopLocation) => {
 
 const getGeocodingStatus = (location: ShopLocation) => {
     if (location.geocoded_at && location.latitude && location.longitude) {
-        return { label: 'Geocoded', variant: 'default' as const };
+        return { label: 'Geocoded', variant: 'success' as const };
     }
-    return { label: 'Not Geocoded', variant: 'secondary' as const };
+    return { label: 'Not Geocoded', variant: 'warning' as const };
 };
 
 const handleDeleteLocation = (locationId: number) => {

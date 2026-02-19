@@ -142,11 +142,11 @@ const requestStatusLabel = (request: ServiceRequest) => {
 };
 
 const requestStatusVariant = (request: ServiceRequest) => {
-    if (request.status === 'filled' && request.booking?.status === 'completed') return 'secondary';
+    if (request.status === 'filled' && request.booking?.status === 'completed') return 'success';
     return ({
-        pending_payment: 'secondary',
-        open: 'default',
-        filled: 'secondary',
+        pending_payment: 'warning',
+        open: 'info',
+        filled: 'outline',
         expired: 'destructive',
         cancelled: 'outline',
     }[request.status] ?? 'outline');
@@ -161,10 +161,10 @@ const bookingStatusLabel = (status: string) => ({
 }[status] ?? status);
 
 const bookingStatusVariant = (status: string) => ({
-    pending: 'secondary',
-    confirmed: 'default',
-    in_progress: 'default',
-    completed: 'secondary',
+    pending: 'warning',
+    confirmed: 'info',
+    in_progress: 'info',
+    completed: 'success',
     cancelled: 'destructive',
 }[status] ?? 'outline');
 
@@ -294,7 +294,7 @@ const statusStep = (status: string) =>
                                         <Button as="a" :href="`/shop/service-requests/${request.id}`" variant="outline" size="sm">View</Button>
                                         <Button
                                             v-if="request.status === 'open'"
-                                            variant="ghost"
+                                            variant="destructive"
                                             size="sm"
                                             :disabled="cancellingRequestId === request.id"
                                             @click="handleCancelRequest(request.id)"

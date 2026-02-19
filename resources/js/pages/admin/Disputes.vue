@@ -97,8 +97,8 @@ const formatDate = (date: string) => {
 const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
         open: 'destructive',
-        under_review: 'default',
-        resolved: 'secondary',
+        under_review: 'warning',
+        resolved: 'success',
         closed: 'outline',
     };
     return colors[status] || 'outline';

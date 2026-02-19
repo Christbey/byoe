@@ -61,15 +61,15 @@ const formatDateTime = (datetime: string) => {
 
 const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-        pending_payment: 'secondary',
-        open: 'default',
-        filled: 'secondary',
+        pending_payment: 'warning',
+        open: 'info',
+        filled: 'outline',
         expired: 'destructive',
         cancelled: 'outline',
-        pending: 'default',
-        confirmed: 'default',
-        in_progress: 'default',
-        completed: 'secondary',
+        pending: 'warning',
+        confirmed: 'info',
+        in_progress: 'info',
+        completed: 'success',
     };
     return colors[status] || 'outline';
 };

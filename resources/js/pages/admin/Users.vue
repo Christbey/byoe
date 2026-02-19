@@ -91,7 +91,7 @@ const formatDate = (date: string) => {
 
 const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-        active: 'default',
+        active: 'success',
         suspended: 'destructive',
         inactive: 'secondary',
     };
@@ -174,7 +174,7 @@ const getStatusColor = (status: string) => {
                                             </Button>
                                             <Button as="a" :href="`/admin/users/${user.id}/edit`" variant="ghost" size="sm">Edit</Button>
                                             <Button v-if="user.status === 'active'" @click="handleSuspendUser(user.id)" variant="ghost" size="sm">Suspend</Button>
-                                            <Button @click="handleDeleteUser(user.id)" variant="ghost" size="sm" class="text-destructive">Delete</Button>
+                                            <Button @click="handleDeleteUser(user.id)" variant="destructive" size="sm">Delete</Button>
                                         </div>
                                     </td>
                                 </tr>
@@ -205,7 +205,7 @@ const getStatusColor = (status: string) => {
                             </Button>
                             <Button as="a" :href="`/admin/users/${user.id}/edit`" variant="outline" size="sm" class="flex-1">Edit</Button>
                             <Button v-if="user.status === 'active'" @click="handleSuspendUser(user.id)" variant="outline" size="sm" class="flex-1">Suspend</Button>
-                            <Button @click="handleDeleteUser(user.id)" variant="ghost" size="sm">Delete</Button>
+                            <Button @click="handleDeleteUser(user.id)" variant="destructive" size="sm">Delete</Button>
                         </div>
                     </CardContent>
                 </Card>
