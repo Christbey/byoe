@@ -23,8 +23,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Shop Profile', href: '/shop/profile' },
-    { title: 'Edit', href: '/shop/profile/edit' },
+    { title: 'Shop Profile', href: '/settings/profile?tab=shop' },
+    { title: 'Edit', href: '/settings/profile?tab=shop' },
 ];
 
 const form = useForm({
@@ -327,7 +327,7 @@ const getStatusLabel = (status: string) => {
                             type="button"
                             variant="outline"
                             as="a"
-                            href="/shop/profile"
+                            href="/settings/profile?tab=shop"
                             :disabled="form.processing"
                             class="w-full sm:w-auto sm:flex-1"
                         >

@@ -175,7 +175,7 @@ const handleSubmit = async (): Promise<void> => {
                     <p class="text-sm text-muted-foreground">
                         No shop profile found. Please set up your shop profile first.
                     </p>
-                    <Button as="a" href="/shop/profile/edit" class="mt-4">Set Up Shop Profile</Button>
+                    <Button as="a" href="/settings/profile?tab=shop" class="mt-4">Set Up Shop Profile</Button>
                 </CardContent>
             </Card>
 

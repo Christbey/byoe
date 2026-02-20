@@ -26,11 +26,11 @@ const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Provider Profile',
-        href: '/provider/profile',
+        href: '/settings/profile?tab=provider',
     },
     {
         title: 'Edit',
-        href: '/provider/profile/edit',
+        href: '/settings/profile?tab=provider',
     },
 ];
 

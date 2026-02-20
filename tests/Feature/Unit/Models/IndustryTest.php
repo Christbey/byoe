@@ -3,6 +3,7 @@
 use App\Models\Industry;
 use App\Models\IndustrySkill;
 use App\Models\IndustryTemplate;
+use App\Models\Provider;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -108,4 +109,22 @@ test('shop stores custom skills as json array', function () {
 
     $shop->refresh();
     expect($shop->custom_skills)->toBeArray()->toEqual(['Spanish-speaking', 'Bilingual']);
+});
+
+test('provider belongs to industry', function () {
+    $industry = Industry::create([
+        'name' => 'Coffee Shop',
+        'slug' => 'coffee-shop',
+        'is_active' => true,
+        'sort_order' => 1,
+    ]);
+
+    $user = User::factory()->create();
+    $provider = Provider::factory()->create([
+        'user_id' => $user->id,
+        'industry_id' => $industry->id,
+    ]);
+
+    expect($provider->industry)->toBeInstanceOf(Industry::class)
+        ->and($provider->industry->name)->toBe('Coffee Shop');
 });

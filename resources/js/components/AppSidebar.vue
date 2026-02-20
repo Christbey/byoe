@@ -55,7 +55,7 @@ const mainNavItems = computed<NavItem[]>(() => {
         items.push(
             {
                 title: 'Shop Profile',
-                href: '/shop/profile',
+                href: '/settings/profile?tab=shop',
                 icon: Building2,
             },
             {
@@ -76,7 +76,7 @@ const mainNavItems = computed<NavItem[]>(() => {
         items.push(
             {
                 title: 'Provider Profile',
-                href: '/provider/profile',
+                href: '/settings/profile?tab=provider',
                 icon: User,
             },
             {

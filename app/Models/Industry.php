@@ -31,4 +31,9 @@ class Industry extends Model
     {
         return $this->hasMany(Shop::class);
     }
+
+    public function providers(): HasMany
+    {
+        return $this->hasMany(Provider::class);
+    }
 }

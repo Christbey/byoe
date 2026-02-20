@@ -188,7 +188,7 @@ const statusStep = (status: string) =>
                         <p class="text-sm text-muted-foreground max-w-md mb-4">
                             Create your shop profile before posting service requests.
                         </p>
-                        <Button as="a" href="/shop/profile/edit">Set Up Shop Profile</Button>
+                        <Button as="a" href="/settings/profile?tab=shop">Set Up Shop Profile</Button>
                     </CardContent>
                 </Card>
 
@@ -307,7 +307,7 @@ const statusStep = (status: string) =>
                         <p class="text-sm text-muted-foreground max-w-md mb-4">
                             Create your shop profile to start posting service requests and receiving bookings.
                         </p>
-                        <Button as="a" href="/shop/profile/edit">Set Up Shop Profile</Button>
+                        <Button as="a" href="/settings/profile?tab=shop">Set Up Shop Profile</Button>
                     </CardContent>
                 </Card>
 

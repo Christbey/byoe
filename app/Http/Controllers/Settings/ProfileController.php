@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\Rating;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,10 +20,67 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('settings/Profile', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+        $user = $request->user();
+        $tab = $request->query('tab', 'personal');
+        $subtab = $request->query('subtab', 'profile');
+
+        $data = [
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
-        ]);
+            'activeTab' => $tab,
+            'canAccessProvider' => $user->hasRole('provider'),
+            'canAccessShop' => $user->hasRole('shop_owner') || $user->hasRole('shop_manager'),
+        ];
+
+        // Load provider data if user has provider role
+        if ($user->hasRole('provider')) {
+            $provider = $user->provider;
+
+            if ($provider) {
+                $defaultSchedule = collect(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+                    ->mapWithKeys(fn ($day) => [$day => ['available' => false, 'start' => '08:00', 'end' => '17:00']])
+                    ->toArray();
+
+                $recentRatings = Rating::with(['booking.serviceRequest.shopLocation.shop', 'rater'])
+                    ->where('ratee_id', $provider->user_id)
+                    ->whereHas('rater', fn ($q) => $q->whereHas('shop'))
+                    ->latest()
+                    ->limit(5)
+                    ->get();
+
+                $totalRatings = $provider->total_ratings ?? 0;
+                $starBreakdown = [];
+                for ($star = 5; $star >= 1; $star--) {
+                    $count = Rating::where('ratee_id', $provider->user_id)->where('rating', $star)->count();
+                    $starBreakdown[$star] = [
+                        'count' => $count,
+                        'percentage' => $totalRatings > 0 ? round(($count / $totalRatings) * 100) : 0,
+                    ];
+                }
+
+                $data['provider'] = $provider;
+                $data['canReceivePayouts'] = $provider->canReceivePayouts();
+                $data['isStripeOnboarded'] = $provider->stripeAccount?->isFullyOnboarded() ?? false;
+                $data['completeness'] = $provider->profileCompleteness();
+                $data['schedule'] = $provider->availability_schedule ?? $defaultSchedule;
+                $data['blackoutDates'] = $provider->blackout_dates ?? [];
+                $data['minNoticeHours'] = $provider->min_notice_hours ?? 24;
+                $data['recentRatings'] = $recentRatings;
+                $data['starBreakdown'] = $starBreakdown;
+            } else {
+                $data['provider'] = null;
+            }
+        }
+
+        // Load shop data if user has shop role
+        if ($user->hasRole('shop_owner') || $user->hasRole('shop_manager')) {
+            $shop = $user->shop;
+            $data['shop'] = $shop ?? (object) ['id' => null];
+            $data['shopLocations'] = $shop?->locations ?? collect();
+            $data['subtab'] = $subtab;
+        }
+
+        return Inertia::render('settings/Profile', $data);
     }
 
     /**

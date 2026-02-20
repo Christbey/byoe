@@ -20,6 +20,7 @@ class Provider extends Model
      */
     protected $fillable = [
         'user_id',
+        'industry_id',
         'bio',
         'skills',
         'years_experience',
@@ -67,6 +68,14 @@ class Provider extends Model
     }
 
     /**
+     * Get the provider's industry.
+     */
+    public function industry(): BelongsTo
+    {
+        return $this->belongsTo(Industry::class);
+    }
+
+    /**
      * Get the provider's Stripe account.
      */
     public function stripeAccount(): HasOne
@@ -96,6 +105,41 @@ class Provider extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(ProviderInvitation::class);
+    }
+
+    /**
+     * Get the merged list of skill names available to this provider.
+     *
+     * Combines industry-default skills with the provider's own skills,
+     * deduplicating the result. Safe to call without pre-loading relations.
+     *
+     * @return list<string>
+     */
+    public function availableSkills(): array
+    {
+        $this->loadMissing('industry.skills');
+
+        $industrySkills = $this->industry?->skills->pluck('name')->toArray() ?? [];
+
+        if (! empty($this->skills)) {
+            $skills = array_values(array_unique(array_merge($industrySkills, $this->skills)));
+        } else {
+            $skills = $industrySkills;
+        }
+
+        return $skills;
+    }
+
+    /**
+     * Get the industry templates available to this provider.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function availableTemplates(): array
+    {
+        $this->loadMissing('industry.templates');
+
+        return $this->industry?->templates->toArray() ?? [];
     }
 
     /**
@@ -170,6 +214,7 @@ class Provider extends Model
     {
         $steps = [
             'profile_created' => true,
+            'industry_selected' => ! empty($this->industry_id),
             'bio_added' => ! empty($this->bio),
             'skills_added' => ! empty($this->skills),
             'payout_account_connected' => $this->stripeAccount?->isFullyOnboarded() ?? false,

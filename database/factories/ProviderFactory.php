@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Industry;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +20,7 @@ class ProviderFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'industry_id' => Industry::inRandomOrder()->value('id'),
             'bio' => fake()->paragraph(),
             'skills' => fake()->randomElements([
                 'espresso',
