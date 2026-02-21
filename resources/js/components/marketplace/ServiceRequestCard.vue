@@ -21,14 +21,25 @@ interface Props {
 const props = defineProps<Props>();
 
 const formattedDate = computed(() => {
-    // Parse as local date to avoid timezone issues
-    const [year, month, day] = props.serviceRequest.service_date.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-    });
+    try {
+        const dateStr = props.serviceRequest.service_date;
+        // Extract just the date part if it's a full datetime string
+        const datePart = dateStr.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+
+        if (isNaN(date.getTime())) {
+            return dateStr; // Fallback to original string
+        }
+
+        return date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+        });
+    } catch (error) {
+        return props.serviceRequest.service_date;
+    }
 });
 
 const formatTime = (time: string) => {

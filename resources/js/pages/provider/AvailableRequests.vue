@@ -110,10 +110,20 @@ const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
 const formatDate = (date: string) => {
-    // Parse as local date to avoid timezone issues
-    const [year, month, day] = date.split('-').map(Number);
-    const localDate = new Date(year, month - 1, day);
-    return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(localDate);
+    try {
+        // Extract just the date part if it's a full datetime string
+        const datePart = date.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        const localDate = new Date(year, month - 1, day);
+
+        if (isNaN(localDate.getTime())) {
+            return date; // Fallback to original string
+        }
+
+        return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(localDate);
+    } catch (error) {
+        return date;
+    }
 };
 
 const formatTime = (time: string) => {
