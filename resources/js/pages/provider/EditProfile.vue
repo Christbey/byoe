@@ -294,6 +294,7 @@ const handleSubmit = () => {
                                     >
                                     + {{ skill }}
                                 </Badge>
+                                </div>
                             </div>
 
                             <!-- Selected Skills -->
