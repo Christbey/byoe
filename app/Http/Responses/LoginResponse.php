@@ -16,7 +16,7 @@ class LoginResponse implements LoginResponseContract
 
         // Shop owners without a shop profile
         if ($user->hasRole('shop_owner') && ! $user->shop) {
-            return redirect()->route('shop.profile.edit')
+            return redirect()->route('shop.onboarding')
                 ->with('info', 'Please complete your shop profile to get started.');
         }
 

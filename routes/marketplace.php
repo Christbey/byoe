@@ -40,6 +40,9 @@ use Illuminate\Support\Facades\Route;
 
 // Shop/Buyer Portal
 Route::prefix('shop')->name('shop.')->middleware(['auth', 'verified', 'role:shop_owner|shop_manager|admin'])->group(function () {
+    // Onboarding walkthrough for new shops (before profile exists)
+    Route::get('/onboarding', [\App\Http\Controllers\Shop\OnboardingController::class, 'show'])->name('onboarding');
+
     // Profile setup — available before a shop profile exists
     Route::get('/profile/edit', [ShopController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ShopController::class, 'update'])->name('profile.update');

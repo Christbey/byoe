@@ -13,8 +13,9 @@ test('onboarding page loads for providers without profile', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('provider/Onboarding')
-        ->has('availableSkills')
+        ->component('provider/OnboardingWizard')
+        ->has('industries')
+        ->has('industrySkills')
     );
 });
 

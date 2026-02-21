@@ -14,9 +14,9 @@ class RegisterResponse implements RegisterResponseContract
     {
         $user = $request->user();
 
-        // Redirect shop owners to shop profile creation
+        // Redirect shop owners to shop onboarding
         if ($user->hasRole('shop_owner')) {
-            return redirect()->route('shop.profile.edit')
+            return redirect()->route('shop.onboarding')
                 ->with('success', 'Welcome! Let\'s set up your shop profile.');
         }
 

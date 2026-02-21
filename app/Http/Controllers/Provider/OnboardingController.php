@@ -35,7 +35,7 @@ class OnboardingController extends Controller
             ->groupBy('industry_id')
             ->map(fn ($skills) => $skills->pluck('name')->values());
 
-        return Inertia::render('provider/Onboarding', [
+        return Inertia::render('provider/OnboardingWizard', [
             'industries' => $industries,
             'industrySkills' => $industrySkills,
         ]);
