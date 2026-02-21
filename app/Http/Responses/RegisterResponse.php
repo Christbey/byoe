@@ -2,7 +2,9 @@
 
 namespace App\Http\Responses;
 
+use App\Mail\User\WelcomeEmail;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 
 class RegisterResponse implements RegisterResponseContract
@@ -13,6 +15,9 @@ class RegisterResponse implements RegisterResponseContract
     public function toResponse($request): RedirectResponse
     {
         $user = $request->user();
+
+        // Send welcome email
+        Mail::to($user->email)->queue(new WelcomeEmail($user));
 
         // Redirect shop owners to shop onboarding
         if ($user->hasRole('shop_owner')) {
