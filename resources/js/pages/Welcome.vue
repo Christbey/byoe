@@ -50,11 +50,11 @@ withDefaults(
         <!-- Hero -->
         <section class="mx-auto max-w-5xl px-6 py-20 text-center">
             <h1 class="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-                On-demand staffing.<br />
-                <span class="text-primary">No agencies. No overhead.</span>
+                Find skilled contractors.<br />
+                <span class="text-primary">Get flexible work.</span>
             </h1>
             <p class="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-                Connect your business with skilled independent contractors, or pick up flexible shifts and get paid directly — all in one platform.
+                The marketplace connecting businesses with independent contractors — post shifts, accept jobs, get paid.
             </p>
 
             <!-- Dual CTA cards -->
