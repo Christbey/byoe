@@ -8,6 +8,7 @@ import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editEmailPreferences } from '@/routes/email-preferences';
 import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
@@ -44,6 +45,10 @@ const sidebarNavItems = computed<NavItem[]>(() => {
     }
 
     items.push(
+        {
+            title: 'Email Preferences',
+            href: editEmailPreferences(),
+        },
         {
             title: 'Password',
             href: editPassword(),

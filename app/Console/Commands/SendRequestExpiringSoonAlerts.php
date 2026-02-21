@@ -25,10 +25,12 @@ class SendRequestExpiringSoonAlerts extends Command
         $sent = 0;
 
         foreach ($requests as $request) {
-            Mail::to($request->shopLocation->shop->user->email)->queue(
-                new RequestExpiringSoon($request)
-            );
-            $sent++;
+            if ($request->shopLocation->shop->user->wantsEmail('booking_reminders')) {
+                Mail::to($request->shopLocation->shop->user->email)->queue(
+                    new RequestExpiringSoon($request)
+                );
+                $sent++;
+            }
         }
 
         $this->info("Sent {$sent} request expiring alerts.");

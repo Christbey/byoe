@@ -28,10 +28,12 @@ class SendBookingCompletionReminders extends Command
         $sent = 0;
 
         foreach ($bookings as $booking) {
-            Mail::to($booking->serviceRequest->shopLocation->shop->user->email)->queue(
-                new BookingCompletionReminder($booking)
-            );
-            $sent++;
+            if ($booking->serviceRequest->shopLocation->shop->user->wantsEmail('booking_reminders')) {
+                Mail::to($booking->serviceRequest->shopLocation->shop->user->email)->queue(
+                    new BookingCompletionReminder($booking)
+                );
+                $sent++;
+            }
         }
 
         $this->info("Sent {$sent} booking completion reminders.");

@@ -28,10 +28,12 @@ class SendUpcomingBookingReminders extends Command
         $sent = 0;
 
         foreach ($bookings as $booking) {
-            Mail::to($booking->provider->user->email)->queue(
-                new UpcomingBookingReminder($booking)
-            );
-            $sent++;
+            if ($booking->provider->user->wantsEmail('booking_reminders')) {
+                Mail::to($booking->provider->user->email)->queue(
+                    new UpcomingBookingReminder($booking)
+                );
+                $sent++;
+            }
         }
 
         $this->info("Sent {$sent} upcoming booking reminders.");

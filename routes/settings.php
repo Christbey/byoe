@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\EmailPreferencesController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
@@ -35,6 +36,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance.edit');
+
+    Route::get('settings/email-preferences', [EmailPreferencesController::class, 'edit'])->name('email-preferences.edit');
+    Route::patch('settings/email-preferences', [EmailPreferencesController::class, 'update'])->name('email-preferences.update');
 
     Route::get('settings/two-factor', [TwoFactorAuthenticationController::class, 'show'])
         ->name('two-factor.show');

@@ -54,6 +54,33 @@ class User extends Authenticatable
             'terms_accepted_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'email_preferences' => 'array',
+        ];
+    }
+
+    /**
+     * Check if user has opted in to a specific email type.
+     */
+    public function wantsEmail(string $type): bool
+    {
+        $preferences = $this->email_preferences ?? [];
+
+        return $preferences[$type] ?? true;
+    }
+
+    /**
+     * Get default email preferences for new users.
+     */
+    public static function defaultEmailPreferences(): array
+    {
+        return [
+            'daily_digest' => true,
+            'weekly_summary' => true,
+            'booking_reminders' => true,
+            'new_requests' => true,
+            'payment_notifications' => true,
+            'rating_notifications' => true,
+            'marketing' => true,
         ];
     }
 

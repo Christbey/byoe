@@ -39,6 +39,11 @@ class SendDailyNearbyRequestsDigests extends Command
         $sent = 0;
 
         foreach ($providers as $provider) {
+            // Skip if user has opted out of daily digests
+            if (! $provider->user->wantsEmail('daily_digest')) {
+                continue;
+            }
+
             // Get nearby requests for this provider
             $requests = $this->getNearbyRequests($provider, $geocodingService);
 

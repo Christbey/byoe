@@ -41,7 +41,7 @@ class SendWeeklySummaries extends Command
 
             $averageRating = $provider->total_ratings > 0 ? $provider->average_rating : 0;
 
-            if ($completedBookings > 0 || $weeklyEarnings > 0) {
+            if (($completedBookings > 0 || $weeklyEarnings > 0) && $provider->user->wantsEmail('weekly_summary')) {
                 Mail::to($provider->user->email)->queue(
                     new WeeklyEarningsSummary($provider, $weeklyEarnings, $completedBookings, $averageRating)
                 );
@@ -72,7 +72,7 @@ class SendWeeklySummaries extends Command
 
             $totalSpent = $completedBookings->sum(fn ($b) => $b->serviceRequest->price);
 
-            if ($upcomingBookings->count() > 0 || $completedBookings->count() > 0) {
+            if (($upcomingBookings->count() > 0 || $completedBookings->count() > 0) && $shop->user->wantsEmail('weekly_summary')) {
                 Mail::to($shop->user->email)->queue(
                     new WeeklyBookingSummary($shop, $upcomingBookings, $completedBookings, $totalSpent)
                 );
