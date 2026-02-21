@@ -11,6 +11,16 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Provider settings - requires provider role
+    Route::get('settings/provider', [ProfileController::class, 'provider'])
+        ->middleware('role:provider|admin')
+        ->name('settings.provider');
+
+    // Shop settings - requires shop role
+    Route::get('settings/shop', [ProfileController::class, 'shop'])
+        ->middleware('role:shop_owner|shop_manager|admin')
+        ->name('settings.shop');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

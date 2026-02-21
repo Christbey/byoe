@@ -3,7 +3,6 @@
 use App\Jobs\ExpireServiceRequestsJob;
 use App\Models\Provider;
 use App\Models\ServiceRequest;
-use App\Models\ShopLocation;
 use App\Services\BookingService;
 
 uses()->group('service-request', 'expiration');
@@ -19,7 +18,7 @@ test('expired requests are marked expired', function () {
     expect($serviceRequest->expires_at->isPast())->toBeTrue();
 
     // Run expiration job
-    $job = new ExpireServiceRequestsJob();
+    $job = new ExpireServiceRequestsJob;
     $job->handle();
 
     // Assert request was marked as expired
@@ -43,7 +42,7 @@ test('future requests are not expired', function () {
     expect($serviceRequest->expires_at->isFuture())->toBeTrue();
 
     // Run expiration job
-    $job = new ExpireServiceRequestsJob();
+    $job = new ExpireServiceRequestsJob;
     $job->handle();
 
     // Assert request is still open
@@ -69,7 +68,7 @@ test('expired requests cannot be accepted', function () {
     // Try to accept expired request
     $bookingService = app(BookingService::class);
 
-    expect(fn() => $bookingService->acceptServiceRequest($serviceRequest, $provider))
+    expect(fn () => $bookingService->acceptServiceRequest($serviceRequest, $provider))
         ->toThrow(\Exception::class, 'Service request is no longer available');
 
     // Assert no booking was created
@@ -97,7 +96,7 @@ test('expiration job processes multiple requests', function () {
     expect(ServiceRequest::where('status', 'expired')->count())->toBe(0);
 
     // Run expiration job
-    $job = new ExpireServiceRequestsJob();
+    $job = new ExpireServiceRequestsJob;
     $job->handle();
 
     // Assert only expired requests were marked
@@ -128,7 +127,7 @@ test('already filled requests are not expired', function () {
     expect($serviceRequest->expires_at->isPast())->toBeTrue();
 
     // Run expiration job
-    $job = new ExpireServiceRequestsJob();
+    $job = new ExpireServiceRequestsJob;
     $job->handle();
 
     // Assert request status is unchanged

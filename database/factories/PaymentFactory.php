@@ -19,7 +19,7 @@ class PaymentFactory extends Factory
     {
         return [
             'booking_id' => Booking::factory(),
-            'stripe_payment_intent_id' => 'pi_' . fake()->unique()->regexify('[A-Za-z0-9]{24}'),
+            'stripe_payment_intent_id' => 'pi_'.fake()->unique()->regexify('[A-Za-z0-9]{24}'),
             'amount' => fake()->randomFloat(2, 50, 500),
             'currency' => 'usd',
             'status' => 'pending',

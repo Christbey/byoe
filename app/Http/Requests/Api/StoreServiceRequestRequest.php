@@ -8,7 +8,8 @@ class StoreServiceRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        // Authorization happens here BEFORE validation
+        return $this->user()->can('create', \App\Models\ServiceRequest::class);
     }
 
     public function rules(): array
@@ -19,9 +20,9 @@ class StoreServiceRequestRequest extends FormRequest
             'description' => ['required', 'string'],
             'skills_required' => ['nullable', 'array'],
             'service_date' => ['required', 'date', 'after_or_equal:today'],
-            'start_time' => ['required', 'date'],
-            'end_time' => ['required', 'date', 'after:start_time'],
-            'price' => ['required', 'numeric', 'gt:0'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'price' => ['nullable', 'numeric', 'gt:0'],
         ];
     }
 }

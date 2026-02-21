@@ -16,14 +16,14 @@ defineProps<{
     <LegalLayout title="Terms of Service" :effective-date="effectiveDate">
         <h2>1. Acceptance of Terms</h2>
         <p>
-            By accessing or using the BYOE platform ("Platform"), you agree to be bound by these Terms of
+            By accessing or using the ShiftFinder platform ("Platform"), you agree to be bound by these Terms of
             Service ("Terms"). If you do not agree, you may not use the Platform. These Terms apply to all
             users, including coffee shop owners, managers, and independent service providers.
         </p>
 
-        <h2>2. About BYOE</h2>
+        <h2>2. About ShiftFinder</h2>
         <p>
-            BYOE is an online marketplace that connects coffee shops and similar food-and-beverage businesses
+            ShiftFinder is an online marketplace that connects coffee shops and similar food-and-beverage businesses
             ("Shops") with independent skilled service providers ("Providers") for on-demand shift coverage
             and specialty services. {{ company }} operates the Platform and facilitates the posting,
             discovery, booking, and payment of service engagements — but is not a party to the service
@@ -86,7 +86,7 @@ defineProps<{
         <p>You agree not to:</p>
         <ul>
             <li>Use the Platform for any unlawful purpose or in violation of applicable regulations;</li>
-            <li>Circumvent the Platform to arrange or pay for services outside of BYOE;</li>
+            <li>Circumvent the Platform to arrange or pay for services outside of ShiftFinder;</li>
             <li>Post false, misleading, or fraudulent information;</li>
             <li>Harass, threaten, or discriminate against other users;</li>
             <li>Attempt to gain unauthorized access to any part of the Platform or its systems;</li>

@@ -64,7 +64,7 @@ test('shop owner can create payment intent for their booking', function () {
             ]));
     });
 
-    $response = $this->actingAs($shopOwner)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($shopOwner)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(200)
         ->assertJsonStructure([
@@ -126,7 +126,7 @@ test('creates payment record in database', function () {
             ->andReturn($payment);
     });
 
-    $response = $this->actingAs($shopOwner)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($shopOwner)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(200);
 
@@ -164,7 +164,7 @@ test('cannot create payment for non-pending booking', function () {
         'status' => 'completed', // Not pending
     ]);
 
-    $response = $this->actingAs($shopOwner)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($shopOwner)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(422)
         ->assertJson([
@@ -203,7 +203,7 @@ test('cannot create payment for other shop booking', function () {
     ]);
 
     // Shop owner 1 tries to create payment for shop owner 2's booking
-    $response = $this->actingAs($shopOwner1)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($shopOwner1)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(403)
         ->assertJson([
@@ -236,7 +236,7 @@ test('unauthenticated user cannot create payment intent', function () {
         'status' => 'pending',
     ]);
 
-    $response = $this->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(401);
 });
@@ -268,7 +268,7 @@ test('user without shop cannot create payment intent', function () {
         'status' => 'pending',
     ]);
 
-    $response = $this->actingAs($user)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($user)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(403)
         ->assertJson([
@@ -323,7 +323,7 @@ test('returns correct amount in cents', function () {
             ]));
     });
 
-    $response = $this->actingAs($shopOwner)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($shopOwner)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(200)
         ->assertJson([
@@ -364,7 +364,7 @@ test('handles stripe service exceptions gracefully', function () {
             ->andThrow(new \Exception('Stripe API error'));
     });
 
-    $response = $this->actingAs($shopOwner)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($shopOwner)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
 
     $response->assertStatus(500)
         ->assertJson([

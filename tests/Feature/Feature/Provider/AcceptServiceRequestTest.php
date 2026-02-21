@@ -42,7 +42,7 @@ test('provider can accept open service request', function () {
     ]);
 
     $this->mock(StripeService::class, function ($mock) {
-        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment());
+        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment);
     });
 
     $response = $this->actingAs($user)->post("/provider/requests/{$serviceRequest->id}/accept");
@@ -83,7 +83,7 @@ test('creates booking with correct fee calculation', function () {
     ]);
 
     $this->mock(StripeService::class, function ($mock) {
-        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment());
+        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment);
     });
 
     $this->actingAs($user)->post("/provider/requests/{$serviceRequest->id}/accept");
@@ -115,7 +115,7 @@ test('marks request as filled after acceptance', function () {
     expect($serviceRequest->status)->toBe('open');
 
     $this->mock(StripeService::class, function ($mock) {
-        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment());
+        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment);
     });
 
     $this->actingAs($user)->post("/provider/requests/{$serviceRequest->id}/accept");
@@ -246,7 +246,7 @@ test('booking has correct accepted at timestamp', function () {
     ]);
 
     $this->mock(StripeService::class, function ($mock) {
-        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment());
+        $mock->shouldReceive('captureServiceRequestPayment')->andReturn(new Payment);
     });
 
     $beforeAcceptance = now();

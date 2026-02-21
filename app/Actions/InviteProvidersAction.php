@@ -11,8 +11,8 @@ class InviteProvidersAction
     /**
      * Execute the action.
      *
-     * @param ServiceRequest $serviceRequest The service request to invite providers to
-     * @param array $providerIds Array of provider IDs to invite
+     * @param  ServiceRequest  $serviceRequest  The service request to invite providers to
+     * @param  array  $providerIds  Array of provider IDs to invite
      * @return int The count of invitations sent
      */
     public function __invoke(ServiceRequest $serviceRequest, array $providerIds): int

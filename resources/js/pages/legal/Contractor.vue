@@ -16,7 +16,7 @@ defineProps<{
     <LegalLayout title="Independent Contractor Agreement" :effective-date="effectiveDate">
         <p>
             This Independent Contractor Agreement ("Agreement") governs the relationship between
-            {{ company }} ("Company") and any individual who registers as a Provider on the BYOE platform
+            {{ company }} ("Company") and any individual who registers as a Provider on the ShiftFinder platform
             ("Contractor"). By creating a Provider account and accepting service requests, you agree to the
             terms of this Agreement.
         </p>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -11,24 +12,54 @@ import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: editProfile(),
-    },
-    {
-        title: 'Password',
-        href: editPassword(),
-    },
-    {
-        title: 'Two-Factor Auth',
-        href: show(),
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-    },
-];
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
+const hasRole = (role: string) => {
+    return user.value?.roles?.includes(role) || false;
+};
+
+const sidebarNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Profile',
+            href: editProfile(),
+        },
+    ];
+
+    // Add Provider settings if user has provider role
+    if (hasRole('provider') || hasRole('admin')) {
+        items.push({
+            title: 'Provider',
+            href: '/settings/provider',
+        });
+    }
+
+    // Add Shop settings if user has shop role
+    if (hasRole('shop_owner') || hasRole('shop_manager') || hasRole('admin')) {
+        items.push({
+            title: 'Shop',
+            href: '/settings/shop',
+        });
+    }
+
+    items.push(
+        {
+            title: 'Password',
+            href: editPassword(),
+        },
+        {
+            title: 'Two-Factor Auth',
+            href: show(),
+        },
+        {
+            title: 'Appearance',
+            href: editAppearance(),
+        }
+    );
+
+    return items;
+});
 
 const { isCurrentUrl } = useCurrentUrl();
 </script>

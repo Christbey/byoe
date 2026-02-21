@@ -17,8 +17,7 @@ class StripeWebhookController extends Controller
      */
     public function __construct(
         protected StripeService $stripeService
-    ) {
-    }
+    ) {}
 
     /**
      * Handle incoming Stripe webhook events.
@@ -33,8 +32,9 @@ class StripeWebhookController extends Controller
         $sigHeader = $request->header('Stripe-Signature');
         $webhookSecret = config('stripe.webhook_secret');
 
-        if (!$webhookSecret) {
+        if (! $webhookSecret) {
             Log::error('Stripe webhook secret not configured');
+
             return response()->json([
                 'error' => 'Webhook secret not configured',
             ], 500);
@@ -52,6 +52,7 @@ class StripeWebhookController extends Controller
             Log::error('Stripe webhook invalid payload', [
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json([
                 'error' => 'Invalid payload',
             ], 400);
@@ -60,6 +61,7 @@ class StripeWebhookController extends Controller
             Log::error('Stripe webhook signature verification failed', [
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json([
                 'error' => 'Invalid signature',
             ], 400);
@@ -124,10 +126,11 @@ class StripeWebhookController extends Controller
         // Find payment by Stripe payment intent ID
         $payment = \App\Models\Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
 
-        if (!$payment) {
+        if (! $payment) {
             Log::warning('Payment not found for failed payment intent', [
                 'payment_intent_id' => $paymentIntent->id,
             ]);
+
             return;
         }
 
@@ -138,7 +141,7 @@ class StripeWebhookController extends Controller
 
         // Cancel the booking
         $booking = $payment->booking;
-        if ($booking && !$booking->isCancelled()) {
+        if ($booking && ! $booking->isCancelled()) {
             $booking->cancel('Payment failed');
         }
 
@@ -156,10 +159,11 @@ class StripeWebhookController extends Controller
         // Find provider stripe account
         $stripeAccount = \App\Models\ProviderStripeAccount::where('stripe_account_id', $account->id)->first();
 
-        if (!$stripeAccount) {
+        if (! $stripeAccount) {
             Log::warning('Stripe account not found', [
                 'account_id' => $account->id,
             ]);
+
             return;
         }
 

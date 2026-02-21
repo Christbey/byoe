@@ -17,8 +17,7 @@ class SendProviderInvitationNotificationJob implements ShouldQueue
      */
     public function __construct(
         public ProviderInvitation $invitation
-    ) {
-    }
+    ) {}
 
     /**
      * Execute the job.

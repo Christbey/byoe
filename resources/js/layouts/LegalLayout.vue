@@ -12,16 +12,34 @@ defineProps<{
     <div class="min-h-svh bg-background text-foreground">
         <!-- Top bar -->
         <header class="border-b">
-            <div class="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+            <div
+                class="mx-auto flex max-w-4xl items-center justify-between px-6 py-4"
+            >
                 <Link href="/" class="flex items-center gap-2">
                     <AppLogoIcon class="size-7 fill-current" />
-                    <span class="font-semibold">BYOE</span>
+                    <span class="font-semibold">ShiftFinder</span>
                 </Link>
                 <nav class="flex gap-4 text-sm text-muted-foreground">
-                    <Link href="/legal/terms" class="hover:text-foreground transition-colors">Terms</Link>
-                    <Link href="/legal/privacy" class="hover:text-foreground transition-colors">Privacy</Link>
-                    <Link href="/legal/cookies" class="hover:text-foreground transition-colors">Cookies</Link>
-                    <Link href="/legal/contractor" class="hover:text-foreground transition-colors">Contractor</Link>
+                    <Link
+                        href="/legal/terms"
+                        class="transition-colors hover:text-foreground"
+                        >Terms</Link
+                    >
+                    <Link
+                        href="/legal/privacy"
+                        class="transition-colors hover:text-foreground"
+                        >Privacy</Link
+                    >
+                    <Link
+                        href="/legal/cookies"
+                        class="transition-colors hover:text-foreground"
+                        >Cookies</Link
+                    >
+                    <Link
+                        href="/legal/contractor"
+                        class="transition-colors hover:text-foreground"
+                        >Contractor</Link
+                    >
                 </nav>
             </div>
         </header>
@@ -30,7 +48,9 @@ defineProps<{
         <main class="mx-auto max-w-4xl px-6 py-12">
             <div class="mb-10 space-y-2">
                 <h1 class="text-3xl font-bold tracking-tight">{{ title }}</h1>
-                <p class="text-sm text-muted-foreground">Effective date: {{ effectiveDate }}</p>
+                <p class="text-sm text-muted-foreground">
+                    Effective date: {{ effectiveDate }}
+                </p>
             </div>
 
             <div class="legal-content">
@@ -39,14 +59,35 @@ defineProps<{
         </main>
 
         <!-- Footer -->
-        <footer class="border-t mt-12">
-            <div class="mx-auto max-w-4xl px-6 py-6 flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
-                <span>&copy; {{ new Date().getFullYear() }} BYOE. All rights reserved.</span>
+        <footer class="mt-12 border-t">
+            <div
+                class="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-4 px-6 py-6 text-xs text-muted-foreground"
+            >
+                <span
+                    >&copy; {{ new Date().getFullYear() }} ShiftFinder. All
+                    rights reserved.</span
+                >
                 <nav class="flex gap-4">
-                    <Link href="/legal/terms" class="hover:text-foreground transition-colors">Terms</Link>
-                    <Link href="/legal/privacy" class="hover:text-foreground transition-colors">Privacy</Link>
-                    <Link href="/legal/cookies" class="hover:text-foreground transition-colors">Cookies</Link>
-                    <Link href="/legal/contractor" class="hover:text-foreground transition-colors">Contractor</Link>
+                    <Link
+                        href="/legal/terms"
+                        class="transition-colors hover:text-foreground"
+                        >Terms</Link
+                    >
+                    <Link
+                        href="/legal/privacy"
+                        class="transition-colors hover:text-foreground"
+                        >Privacy</Link
+                    >
+                    <Link
+                        href="/legal/cookies"
+                        class="transition-colors hover:text-foreground"
+                        >Cookies</Link
+                    >
+                    <Link
+                        href="/legal/contractor"
+                        class="transition-colors hover:text-foreground"
+                        >Contractor</Link
+                    >
                 </nav>
             </div>
         </footer>

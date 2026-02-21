@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         // Create admin user
         $admin = User::factory()->create([
             'name' => 'Admin User',
-            'email' => 'admin@byoe.test',
+            'email' => 'admin@shiftfinder.test',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         for ($i = 1; $i <= 10; $i++) {
             $shopOwner = User::factory()->create([
                 'name' => "Shop Owner $i",
-                'email' => "shop{$i}@byoe.test",
+                'email' => "shop{$i}@shiftfinder.test",
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]);
@@ -71,7 +71,7 @@ class DatabaseSeeder extends Seeder
         for ($i = 1; $i <= 10; $i++) {
             $providerUser = User::factory()->create([
                 'name' => "Provider $i",
-                'email' => "provider{$i}@byoe.test",
+                'email' => "provider{$i}@shiftfinder.test",
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]);
@@ -96,9 +96,9 @@ class DatabaseSeeder extends Seeder
         $this->command->table(
             ['Role', 'Email', 'Password'],
             [
-                ['Admin', 'admin@byoe.test', 'password'],
-                ['Shop Owner', 'shop1@byoe.test (through shop10@byoe.test)', 'password'],
-                ['Provider', 'provider1@byoe.test (through provider10@byoe.test)', 'password'],
+                ['Admin', 'admin@shiftfinder.test', 'password'],
+                ['Shop Owner', 'shop1@shiftfinder.test (through shop10@shiftfinder.test)', 'password'],
+                ['Provider', 'provider1@shiftfinder.test (through provider10@shiftfinder.test)', 'password'],
             ]
         );
         $this->command->newLine();

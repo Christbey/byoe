@@ -11,7 +11,7 @@ Great news! A coffee shop in your area is looking for a barista with your skills
 
 **Date:** {{ $serviceRequest->service_date->format('l, F j, Y') }}
 
-**Time:** {{ $serviceRequest->start_time->format('g:i A') }} - {{ $serviceRequest->end_time->format('g:i A') }}
+**Time:** {{ \Carbon\Carbon::createFromTimeString($serviceRequest->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::createFromTimeString($serviceRequest->end_time)->format('g:i A') }}
 
 **Location:** {{ $serviceRequest->shopLocation->fullAddress() }}
 

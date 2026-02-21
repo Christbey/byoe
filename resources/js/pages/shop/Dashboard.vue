@@ -4,14 +4,19 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { ServiceRequest, Booking } from '@/types/marketplace';
+import { Button } from '@/components/ui/button';
+import Badge from '@/components/ui/badge/Badge.vue';
 import Card from '@/components/ui/card/Card.vue';
 import CardHeader from '@/components/ui/card/CardHeader.vue';
 import CardTitle from '@/components/ui/card/CardTitle.vue';
 import CardDescription from '@/components/ui/card/CardDescription.vue';
 import CardContent from '@/components/ui/card/CardContent.vue';
-import { Button } from '@/components/ui/button';
-import Badge from '@/components/ui/badge/Badge.vue';
+import PageHeader from '@/components/ui/page-header/PageHeader.vue';
 import PageHelp from '@/components/marketplace/PageHelp.vue';
+import StatCard from '@/components/marketplace/StatCard.vue';
+import ListItem from '@/components/marketplace/ListItem.vue';
+import EmptyState from '@/components/ui/empty-state/EmptyState.vue';
+import Icon from '@/components/ui/icon/Icon.vue';
 
 interface DashboardStats {
     active_requests: number;
@@ -28,7 +33,9 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const pageTitle = computed(() => (props.shopName ? `${props.shopName} Dashboard` : 'Shop Dashboard'));
+const pageTitle = computed(() =>
+    props.shopName ? `${props.shopName} Dashboard` : 'Shop Dashboard',
+);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -53,255 +60,290 @@ const formatDate = (date: string) => {
 };
 
 const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-    });
+    if (!time) return '';
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
+const getRequestStatusVariant = (status: string) => {
+    const variants: Record<string, 'success' | 'warning' | 'danger' | 'pending' | 'default'> = {
+        open: 'success',
+        pending_payment: 'warning',
+        filled: 'default',
+        cancelled: 'danger',
+        expired: 'danger',
+    };
+    return variants[status] || 'default';
+};
 
+const getBookingStatusVariant = (status: string) => {
+    const variants: Record<string, 'success' | 'warning' | 'danger' | 'pending' | 'default'> = {
+        confirmed: 'success',
+        pending: 'pending',
+        completed: 'default',
+        cancelled: 'danger',
+    };
+    return variants[status] || 'default';
+};
 </script>
 
 <template>
     <Head :title="pageTitle" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-            <!-- Header -->
-            <div class="space-y-2">
-                <h1 class="text-2xl font-bold tracking-tight md:text-3xl">
-                    {{ pageTitle }}
-                </h1>
-                <p class="text-sm text-muted-foreground md:text-base">
-                    Overview of your service requests and bookings
-                </p>
-                <PageHelp storage-key="shop-dashboard" :steps="['Post a service request to find a worker — set the date, time, skills needed, and pay rate.', 'Providers in your area will see and accept your request. You\'ll see the booking appear here.', 'Once the provider completes the shift, mark it complete and leave a rating.', 'Track your upcoming bookings and spending on this dashboard.']" />
-            </div>
+        <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
+            <!-- Page Header -->
+            <PageHeader
+                :title="pageTitle"
+                description="Overview of your service requests and bookings"
+            >
+                <template #action>
+                    <Button href="/shop/service-requests/create">
+                        <Icon name="Plus" size="sm" class="mr-2" />
+                        Create Request
+                    </Button>
+                </template>
+                <template #help>
+                    <PageHelp
+                        storage-key="shop-dashboard"
+                        :steps="[
+                            'Post a service request to find a worker — set the date, time, skills needed, and pay rate.',
+                            'Providers in your area will see and accept your request. You\'ll see the booking appear here.',
+                            'Once the provider completes the shift, mark it complete and leave a rating.',
+                            'Track your upcoming bookings and spending on this dashboard.',
+                        ]"
+                    />
+                </template>
+            </PageHeader>
 
             <!-- Stats Cards -->
             <div class="grid gap-4 md:grid-cols-3">
-                <Card>
-                    <CardHeader>
-                        <CardDescription>Active Requests</CardDescription>
-                        <CardTitle class="text-3xl">
-                            {{ stats.active_requests }}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-xs text-muted-foreground">
-                            Open service requests
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon="FileText"
+                    label="Active Requests"
+                    :value="stats.active_requests"
+                    subtitle="Open service requests"
+                    variant="accent"
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardDescription>Upcoming Bookings</CardDescription>
-                        <CardTitle class="text-3xl">
-                            {{ stats.upcoming_bookings }}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-xs text-muted-foreground">
-                            Next 7 days
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon="CalendarCheck"
+                    label="Upcoming Bookings"
+                    :value="stats.upcoming_bookings"
+                    subtitle="Next 7 days"
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardDescription>Total Spent</CardDescription>
-                        <CardTitle class="text-3xl">
-                            {{ formatCurrency(stats.total_spent) }}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-xs text-muted-foreground">
-                            All time
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon="DollarSign"
+                    label="Total Spent"
+                    :value="formatCurrency(stats.total_spent)"
+                    subtitle="All time"
+                />
             </div>
 
             <!-- Quick Actions -->
-            <div class="flex flex-col gap-3 sm:flex-row">
+            <div class="flex flex-col sm:flex-row gap-3">
                 <Button
-                    as="a"
                     href="/shop/service-requests/create"
                     class="w-full sm:w-auto"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        class="size-5 mr-2"
-                    >
-                        <path
-                            d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
-                        />
-                    </svg>
+                    <Icon name="Plus" size="sm" class="mr-2" />
                     Create Request
                 </Button>
                 <Button
-                    as="a"
+                    href="/shop/service-requests"
+                    variant="outline"
+                    class="w-full sm:w-auto"
+                >
+                    <Icon name="FileText" size="sm" class="mr-2" />
+                    All Requests
+                </Button>
+                <Button
                     href="/shop/bookings"
                     variant="outline"
                     class="w-full sm:w-auto"
                 >
-                    View All Bookings
+                    <Icon name="Calendar" size="sm" class="mr-2" />
+                    All Bookings
                 </Button>
             </div>
 
-            <!-- Two Column Layout for Lists -->
+            <!-- Two Column Layout -->
             <div class="grid gap-4 lg:grid-cols-2">
                 <!-- Recent Service Requests -->
                 <Card>
                     <CardHeader>
-                        <CardTitle>Recent Service Requests</CardTitle>
-                        <CardDescription>
-                            Your last 5 service requests
-                        </CardDescription>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Recent Service Requests</CardTitle>
+                                <CardDescription>Your last 5 requests</CardDescription>
+                            </div>
+                            <Icon name="FileText" class="text-muted-foreground" />
+                        </div>
                     </CardHeader>
-                    <CardContent class="space-y-4">
-                        <div
-                            v-if="recent_requests.length > 0"
-                            class="space-y-3"
-                        >
-                            <div
+                    <CardContent class="space-y-3">
+                        <template v-if="recent_requests.length > 0">
+                            <ListItem
                                 v-for="request in recent_requests"
                                 :key="request.id"
-                                class="flex flex-col gap-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                                :status="getRequestStatusVariant(request.status)"
+                                clickable
+                                @click="router.visit(`/shop/service-requests/${request.id}`)"
                             >
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-medium text-sm truncate">
-                                            {{ request.title }}
-                                        </p>
-                                        <p class="text-xs text-muted-foreground">
-                                            {{ formatDate(request.service_date) }}
-                                            •
+                                <template #header>
+                                    <h3 class="font-semibold text-sm">
+                                        {{ request.title }}
+                                    </h3>
+                                </template>
+
+                                <template #content>
+                                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Icon name="Calendar" size="xs" />
+                                        <span>{{ formatDate(request.service_date) }}</span>
+                                        <span>•</span>
+                                        <Icon name="Clock" size="xs" />
+                                        <span>
                                             {{ formatTime(request.start_time) }}
                                             -
                                             {{ formatTime(request.end_time) }}
-                                        </p>
+                                        </span>
                                     </div>
-                                    <Badge
-                                        :variant="request.status_variant"
-                                        class="shrink-0"
-                                    >
+                                </template>
+
+                                <template #footer>
+                                    <div class="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                                        <Icon name="DollarSign" size="xs" />
+                                        <span>{{ formatCurrency(request.price) }}</span>
+                                    </div>
+                                </template>
+
+                                <template #badge>
+                                    <Badge :variant="request.status_variant">
                                         {{ request.status_label }}
                                     </Badge>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <p class="text-sm font-semibold">
-                                        {{ formatCurrency(request.price) }}
-                                    </p>
-                                    <Button
-                                        as="a"
-                                        :href="`/shop/service-requests/${request.id}`"
-                                        variant="ghost"
-                                        size="sm"
-                                    >
-                                        View
+                                </template>
+
+                                <template #action>
+                                    <Button variant="ghost" size="sm">
+                                        <span class="sr-only">View details</span>
+                                        <Icon name="ChevronRight" size="sm" />
                                     </Button>
-                                </div>
-                            </div>
-                        </div>
-                        <div
+                                </template>
+                            </ListItem>
+                        </template>
+
+                        <!-- Empty State -->
+                        <EmptyState
                             v-else
-                            class="text-center py-8 text-sm text-muted-foreground"
-                        >
-                            No service requests yet
+                            icon="FileX"
+                            title="No service requests yet"
+                            description="Create your first service request to find skilled providers in your area."
+                            action-label="Create Request"
+                            action-href="/shop/service-requests/create"
+                        />
+
+                        <!-- View All Button -->
+                        <div v-if="recent_requests.length > 0" class="pt-3 border-t">
+                            <Button
+                                href="/shop/service-requests"
+                                variant="outline"
+                                class="w-full"
+                            >
+                                View All Requests
+                                <Icon name="ArrowRight" size="sm" class="ml-2" />
+                            </Button>
                         </div>
-                        <Button
-                            as="a"
-                            href="/shop/service-requests"
-                            variant="outline"
-                            class="w-full"
-                        >
-                            View All Requests
-                        </Button>
                     </CardContent>
                 </Card>
 
                 <!-- Upcoming Bookings -->
                 <Card>
                     <CardHeader>
-                        <CardTitle>Upcoming Bookings</CardTitle>
-                        <CardDescription>
-                            Confirmed bookings in the next 7 days
-                        </CardDescription>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Upcoming Bookings</CardTitle>
+                                <CardDescription>
+                                    Confirmed bookings in the next 7 days
+                                </CardDescription>
+                            </div>
+                            <Icon name="CalendarDays" class="text-muted-foreground" />
+                        </div>
                     </CardHeader>
-                    <CardContent class="space-y-4">
-                        <div
-                            v-if="upcoming_bookings.length > 0"
-                            class="space-y-3"
-                        >
-                            <div
+                    <CardContent class="space-y-3">
+                        <template v-if="upcoming_bookings.length > 0">
+                            <ListItem
                                 v-for="booking in upcoming_bookings"
                                 :key="booking.id"
-                                class="flex flex-col gap-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                                :status="getBookingStatusVariant(booking.status)"
+                                clickable
+                                @click="router.visit(`/shop/bookings/${booking.id}`)"
                             >
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-medium text-sm truncate">
-                                            {{
-                                                booking.service_request?.title ||
-                                                'Service'
-                                            }}
-                                        </p>
-                                        <p class="text-xs text-muted-foreground">
-                                            {{
-                                                formatDate(
-                                                    booking.service_request
-                                                        ?.service_date || '',
-                                                )
-                                            }}
-                                            •
-                                            {{
-                                                formatTime(
-                                                    booking.service_request
-                                                        ?.start_time || '',
-                                                )
-                                            }}
-                                        </p>
+                                <template #header>
+                                    <h3 class="font-semibold text-sm">
+                                        {{ booking.service_request?.title || 'Service' }}
+                                    </h3>
+                                </template>
+
+                                <template #content>
+                                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Icon name="Calendar" size="xs" />
+                                        <span>{{ formatDate(booking.service_request?.service_date || '') }}</span>
+                                        <span>•</span>
+                                        <Icon name="Clock" size="xs" />
+                                        <span>{{ formatTime(booking.service_request?.start_time || '') }}</span>
                                     </div>
-                                    <Badge
-                                        :variant="booking.status_variant"
-                                        class="shrink-0"
+                                </template>
+
+                                <template #footer>
+                                    <div
+                                        v-if="booking.provider"
+                                        class="flex items-center gap-1.5 text-xs text-muted-foreground"
                                     >
-                                        {{ booking.status_label }}
-                                    </Badge>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <p class="text-sm font-semibold">
-                                        {{ formatCurrency(booking.service_price) }}
-                                    </p>
-                                    <Button
-                                        as="a"
-                                        :href="`/shop/bookings/${booking.id}`"
-                                        variant="ghost"
-                                        size="sm"
-                                    >
-                                        View
+                                        <Icon name="User" size="xs" />
+                                        <span>{{ booking.provider.user?.name ?? '—' }}</span>
+                                    </div>
+                                </template>
+
+                                <template #badge>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <Badge :variant="booking.status_variant">
+                                            {{ booking.status_label }}
+                                        </Badge>
+                                        <span class="text-sm font-semibold text-foreground">
+                                            {{ formatCurrency(booking.service_price) }}
+                                        </span>
+                                    </div>
+                                </template>
+
+                                <template #action>
+                                    <Button variant="ghost" size="sm">
+                                        <span class="sr-only">View details</span>
+                                        <Icon name="ChevronRight" size="sm" />
                                     </Button>
-                                </div>
-                            </div>
-                        </div>
-                        <div
+                                </template>
+                            </ListItem>
+                        </template>
+
+                        <!-- Empty State -->
+                        <EmptyState
                             v-else
-                            class="text-center py-8 text-sm text-muted-foreground"
-                        >
-                            No upcoming bookings
+                            icon="CalendarOff"
+                            title="No upcoming bookings"
+                            description="Your confirmed bookings will appear here once providers accept your service requests."
+                        />
+
+                        <!-- View All Button -->
+                        <div v-if="upcoming_bookings.length > 0" class="pt-3 border-t">
+                            <Button href="/shop/bookings" variant="outline" class="w-full">
+                                View All Bookings
+                                <Icon name="ArrowRight" size="sm" class="ml-2" />
+                            </Button>
                         </div>
-                        <Button
-                            as="a"
-                            href="/shop/bookings"
-                            variant="outline"
-                            class="w-full"
-                        >
-                            View All Bookings
-                        </Button>
                     </CardContent>
                 </Card>
             </div>

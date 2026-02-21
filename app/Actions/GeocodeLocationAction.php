@@ -12,13 +12,12 @@ class GeocodeLocationAction
      */
     public function __construct(
         protected GeocodingService $geocodingService
-    ) {
-    }
+    ) {}
 
     /**
      * Execute the action.
      *
-     * @param ShopLocation $location The shop location to geocode
+     * @param  ShopLocation  $location  The shop location to geocode
      * @return ShopLocation The updated shop location
      */
     public function __invoke(ShopLocation $location): ShopLocation

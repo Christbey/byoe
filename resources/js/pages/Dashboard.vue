@@ -34,6 +34,7 @@ interface Props {
     // Provider props
     stats?: ProviderStats | ShopStats;
     upcoming_bookings?: Booking[];
+    available_requests?: ServiceRequest[];
     recent_activity?: Booking[];
     // Shop props
     recent_requests?: ServiceRequest[];
@@ -41,6 +42,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     upcoming_bookings: () => [],
+    available_requests: () => [],
     recent_activity: () => [],
     recent_requests: () => [],
 });
@@ -59,7 +61,13 @@ const formatDate = (date: string) =>
 
 const formatTime = (time: string) => {
     if (!time) return '';
-    return new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
 
@@ -139,44 +147,45 @@ const shopStats = () => props.stats as ShopStats;
                         <Button as="a" href="/provider/earnings" variant="outline">Earnings Detail</Button>
                     </div>
 
-                    <!-- Upcoming Bookings -->
+                    <!-- Available Service Requests -->
                     <Card>
                         <CardHeader>
-                            <CardTitle>Upcoming Bookings</CardTitle>
-                            <CardDescription>Your next 14 days</CardDescription>
+                            <CardTitle>Available Requests</CardTitle>
+                            <CardDescription>Recent requests you can accept</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div v-if="upcoming_bookings.length > 0" class="divide-y">
+                            <div v-if="available_requests.length > 0" class="divide-y">
                                 <div
-                                    v-for="booking in upcoming_bookings"
-                                    :key="booking.id"
+                                    v-for="request in available_requests"
+                                    :key="request.id"
                                     class="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0"
                                 >
                                     <div class="flex-1 min-w-0 space-y-0.5">
                                         <p class="font-semibold truncate">
-                                            {{ booking.service_request?.title || 'Service' }}
+                                            {{ request.title }}
                                         </p>
                                         <p class="text-sm text-muted-foreground">
-                                            {{ formatDate(booking.service_request?.service_date || '') }}
-                                            · {{ formatTime(booking.service_request?.start_time || '') }}
+                                            {{ formatDate(request.service_date) }}
+                                            · {{ formatTime(request.start_time) }}
+                                            - {{ formatTime(request.end_time) }}
                                         </p>
                                         <p class="text-xs text-muted-foreground">
-                                            {{ booking.service_request?.shop_location?.shop?.name }}
-                                            · {{ booking.service_request?.shop_location?.city }}
+                                            {{ request.shop_location?.shop?.name }}
+                                            · {{ request.shop_location?.city }}, {{ request.shop_location?.state }}
                                         </p>
                                     </div>
                                     <div class="flex flex-col items-end gap-1 shrink-0">
-                                        <span class="font-bold text-primary">{{ formatCurrency(booking.provider_payout) }}</span>
-                                        <Link :href="`/provider/bookings/${booking.id}`">
-                                            <Button variant="ghost" size="sm">View</Button>
+                                        <span class="font-bold text-primary">{{ formatCurrency(request.price) }}</span>
+                                        <Link href="/provider/available-requests">
+                                            <Button variant="ghost" size="sm">View All</Button>
                                         </Link>
                                     </div>
                                 </div>
                             </div>
-                            <p v-else class="py-8 text-center text-sm text-muted-foreground">No upcoming bookings</p>
+                            <p v-else class="py-8 text-center text-sm text-muted-foreground">No available requests</p>
                             <div class="pt-4 border-t mt-4">
-                                <Button as="a" href="/provider/bookings" variant="outline" class="w-full">
-                                    View All Bookings
+                                <Button as="a" href="/provider/available-requests" variant="outline" class="w-full">
+                                    Browse All Requests
                                 </Button>
                             </div>
                         </CardContent>

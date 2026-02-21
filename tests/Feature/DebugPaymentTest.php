@@ -19,7 +19,7 @@ test('debug non-pending response', function () {
         'provider_id' => $provider->id,
         'status' => 'completed',
     ]);
-    $response = $this->actingAs($shopOwner)->postJson("/api/payments/bookings/{$booking->id}/payment-intent");
+    $response = $this->actingAs($shopOwner)->postJson("/api/v1/bookings/{$booking->id}/payment-intent");
     fwrite(STDERR, 'Response: '.json_encode($response->json())."\n");
     fwrite(STDERR, 'Status: '.$response->status()."\n");
     expect(true)->toBeTrue();

@@ -21,7 +21,7 @@ class ServiceRequestFactory extends Factory
         $startTime = clone $serviceDate;
         $startTime->setTime(fake()->numberBetween(6, 14), 0);
         $endTime = clone $startTime;
-        $endTime->modify('+' . fake()->numberBetween(4, 8) . ' hours');
+        $endTime->modify('+'.fake()->numberBetween(4, 8).' hours');
 
         return [
             'shop_location_id' => ShopLocation::factory(),

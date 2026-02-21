@@ -11,9 +11,9 @@ class CreateRatingAction
     /**
      * Execute the action.
      *
-     * @param Booking $booking The booking being rated
-     * @param User $rater The user giving the rating
-     * @param array $validated The validated rating data
+     * @param  Booking  $booking  The booking being rated
+     * @param  User  $rater  The user giving the rating
+     * @param  array  $validated  The validated rating data
      * @return Rating The created rating
      */
     public function __invoke(Booking $booking, User $rater, array $validated): Rating

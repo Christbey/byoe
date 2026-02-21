@@ -9,6 +9,9 @@ import MobileTapButton from '@/components/marketplace/MobileTapButton.vue';
 import Badge from '@/components/ui/badge/Badge.vue';
 import { Button } from '@/components/ui/button';
 import PageHelp from '@/components/marketplace/PageHelp.vue';
+import PageHeader from '@/components/ui/page-header/PageHeader.vue';
+import EmptyState from '@/components/ui/empty-state/EmptyState.vue';
+import Icon from '@/components/ui/icon/Icon.vue';
 
 interface Props {
     requests: PaginatedResponse<ServiceRequest>;
@@ -109,8 +112,16 @@ const formatCurrency = (amount: number) =>
 const formatDate = (date: string) =>
     new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(date));
 
-const formatTime = (time: string) =>
-    new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+const formatTime = (time: string) => {
+    if (!time) return '';
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
 
 // Lock body scroll while modal is open
 watch(confirmingRequest, (val) => {
@@ -132,17 +143,24 @@ onUnmounted(() => {
     <Head title="Available Requests" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-            <!-- Header -->
-            <div class="space-y-2">
-                <h1 class="text-2xl font-bold tracking-tight md:text-3xl">
-                    Available Service Requests
-                </h1>
-                <p class="text-sm text-muted-foreground md:text-base">
-                    Browse and accept service requests from local coffee shops
-                </p>
-                <PageHelp storage-key="provider-available-requests" :steps="['These are open shifts posted by coffee shops — each one is a fixed-price service opportunity.', 'Review the date, time, location, skills required, and pay before accepting.', 'Tap \'Accept Request\' to claim the shift. You\'re an independent contractor — no obligation to accept any job.', 'Once you accept, a booking is created and the shop will be notified.']" />
-            </div>
+        <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
+            <!-- Page Header -->
+            <PageHeader
+                title="Available Service Requests"
+                description="Browse and accept service requests from local coffee shops"
+            >
+                <template #help>
+                    <PageHelp
+                        storage-key="provider-available-requests"
+                        :steps="[
+                            'These are open shifts posted by coffee shops — each one is a fixed-price service opportunity.',
+                            'Review the date, time, location, skills required, and pay before accepting.',
+                            'Tap \'Accept Request\' to claim the shift. You\'re an independent contractor — no obligation to accept any job.',
+                            'Once you accept, a booking is created and the shop will be notified.',
+                        ]"
+                    />
+                </template>
+            </PageHeader>
 
             <!-- Filter Tabs -->
             <div class="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
@@ -159,20 +177,15 @@ onUnmounted(() => {
             </div>
 
             <!-- Location Banner (Nearby filter) -->
-            <div v-if="isRequestingGps" class="flex items-center gap-2 text-sm text-muted-foreground">
-                <svg class="size-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+            <div v-if="isRequestingGps" class="flex items-center gap-2 text-sm text-muted-foreground rounded-lg bg-muted/50 px-4 py-3">
+                <Icon name="Loader2" size="sm" class="animate-spin" />
                 Requesting your location...
             </div>
             <div
                 v-else-if="activeFilter === 'nearby' && locationSource"
-                class="flex items-center gap-2 text-sm text-muted-foreground rounded-lg bg-muted/50 px-3 py-2"
+                class="flex items-center gap-2 text-sm text-muted-foreground rounded-lg bg-muted/50 px-4 py-3"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0">
-                    <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" />
-                </svg>
+                <Icon name="MapPin" size="sm" />
                 <span v-if="locationSource === 'gps'">Showing nearby requests using your current location</span>
                 <span v-else>Showing nearby requests using your saved zip code</span>
             </div>
@@ -212,15 +225,12 @@ onUnmounted(() => {
             </div>
 
             <!-- Empty State -->
-            <div v-else class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-muted-foreground mb-4">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                </svg>
-                <h3 class="text-lg font-semibold mb-2">No requests found</h3>
-                <p class="text-sm text-muted-foreground max-w-md">
-                    There are no service requests matching your current filter. Try selecting a different filter or check back later.
-                </p>
-            </div>
+            <EmptyState
+                v-else
+                icon="FileX"
+                title="No requests found"
+                description="There are no service requests matching your current filter. Try selecting a different filter or check back later."
+            />
 
             <!-- Load More -->
             <div v-if="hasMorePages" class="flex justify-center pt-4">

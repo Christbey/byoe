@@ -1,7 +1,20 @@
 <?php
 
-use App\Http\Controllers\Api\CreateServiceRequestController;
-use App\Http\Controllers\Payment\CreatePaymentIntentController;
+use App\Http\Controllers\Api\V1\Auth\LoginController;
+use App\Http\Controllers\Api\V1\Auth\LogoutController;
+use App\Http\Controllers\Api\V1\Auth\MeController;
+use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\BookingController;
+use App\Http\Controllers\Api\V1\IndustryController;
+use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PayoutController;
+use App\Http\Controllers\Api\V1\Provider\AcceptServiceRequestController;
+use App\Http\Controllers\Api\V1\Provider\BookingController as ProviderBookingController;
+use App\Http\Controllers\Api\V1\Provider\DashboardController as ProviderDashboardController;
+use App\Http\Controllers\Api\V1\ServiceRequestController;
+use App\Http\Controllers\Api\V1\Shop\BookingController as ShopBookingController;
+use App\Http\Controllers\Api\V1\Shop\DashboardController as ShopDashboardController;
+use App\Http\Controllers\Api\V1\Shop\LocationController;
 use App\Http\Controllers\Payment\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,53 +37,58 @@ Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.web
 // ============================================================================
 Route::prefix('v1')->group(function () {
 
-    // Public endpoints (no auth required)
-    Route::post('/auth/login', function () {
-        return response()->json(['message' => 'Login endpoint - to be implemented']);
-    });
-    Route::post('/auth/register', function () {
-        return response()->json(['message' => 'Register endpoint - to be implemented']);
+    // Public endpoints (no authentication required)
+    Route::get('industries', [IndustryController::class, 'index']);
+    Route::get('industries/{industry}', [IndustryController::class, 'show']);
+
+    // Authentication endpoints
+    Route::prefix('auth')->group(function () {
+        // Public endpoints (no auth required)
+        Route::post('/register', [RegisterController::class, 'store'])
+            ->middleware('throttle:api.auth');
+        Route::post('/login', [LoginController::class, 'store'])
+            ->middleware('throttle:api.auth');
+
+        // Protected endpoints
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/logout', LogoutController::class);
+            Route::get('/me', MeController::class);
+        });
     });
 
-    // Protected endpoints (Sanctum token authentication)
-    Route::middleware(['auth:sanctum'])->group(function () {
+    // Protected endpoints (supports both Sanctum token and session authentication)
+    Route::middleware(['auth:sanctum,web'])->group(function () {
 
-        // Provider routes (mobile app)
+        // Service Request routes
+        Route::apiResource('service-requests', ServiceRequestController::class);
+        Route::post('service-requests/{serviceRequest}/confirm-payment', [ServiceRequestController::class, 'confirmPayment']);
+
+        // Booking routes
+        Route::apiResource('bookings', BookingController::class)->only(['index', 'show']);
+        Route::post('bookings/{booking}/complete', [BookingController::class, 'complete']);
+        Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel']);
+        Route::post('bookings/{booking}/rate', [BookingController::class, 'rate']);
+        Route::post('bookings/{booking}/payment-intent', [BookingController::class, 'createPaymentIntent']);
+
+        // Payment routes (shop owners)
+        Route::apiResource('payments', PaymentController::class)->only(['index', 'show']);
+
+        // Payout routes (providers)
+        Route::apiResource('payouts', PayoutController::class)->only(['index', 'show']);
+
+        // Provider routes
         Route::prefix('provider')->middleware('role:provider|admin')->group(function () {
-            Route::get('/dashboard', function () {
-                return response()->json(['message' => 'Provider dashboard - to be implemented']);
-            });
-            Route::get('/bookings', function () {
-                return response()->json(['message' => 'Provider bookings - to be implemented']);
-            });
-            Route::get('/available-requests', function () {
-                return response()->json(['message' => 'Available requests - to be implemented']);
-            });
-            Route::post('/requests/{serviceRequest}/accept', function () {
-                return response()->json(['message' => 'Accept request - to be implemented']);
-            });
+            Route::get('/dashboard', [ProviderDashboardController::class, 'index']);
+            Route::get('/bookings', [ProviderBookingController::class, 'index']);
+            Route::get('/available-requests', [ProviderBookingController::class, 'available']);
+            Route::post('/service-requests/{serviceRequest}/accept', AcceptServiceRequestController::class);
         });
 
-        // Shop routes (mobile app)
+        // Shop routes
         Route::prefix('shop')->middleware('role:shop_owner|shop_manager|admin')->group(function () {
-            Route::get('/dashboard', function () {
-                return response()->json(['message' => 'Shop dashboard - to be implemented']);
-            });
-            Route::post('/service-requests', function () {
-                return response()->json(['message' => 'Create service request - to be implemented']);
-            });
+            Route::get('/dashboard', [ShopDashboardController::class, 'index']);
+            Route::get('/bookings', [ShopBookingController::class, 'index']);
+            Route::apiResource('locations', LocationController::class);
         });
-    });
-});
-
-// Shop API routes (session auth)
-Route::middleware(['web', 'auth', 'verified'])->group(function () {
-    Route::post('/service-requests', CreateServiceRequestController::class)->name('api.service-requests.store');
-});
-
-// Payment routes (session auth)
-Route::middleware(['web', 'auth', 'verified'])->group(function () {
-    Route::prefix('payments')->name('payments.')->group(function () {
-        Route::post('/bookings/{booking}/payment-intent', CreatePaymentIntentController::class)->name('create-intent');
     });
 });

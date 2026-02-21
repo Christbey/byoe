@@ -9,7 +9,7 @@ Your booking has been confirmed! Here are the details:
 
 **Service Date:** {{ $booking->serviceRequest->service_date->format('l, F j, Y') }}
 
-**Time:** {{ $booking->serviceRequest->start_time->format('g:i A') }} - {{ $booking->serviceRequest->end_time->format('g:i A') }}
+**Time:** {{ \Carbon\Carbon::createFromTimeString($booking->serviceRequest->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::createFromTimeString($booking->serviceRequest->end_time)->format('g:i A') }}
 
 **Location:** {{ $booking->serviceRequest->shopLocation->fullAddress() }}
 

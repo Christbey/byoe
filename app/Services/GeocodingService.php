@@ -67,7 +67,7 @@ class GeocodingService
             // Respect Nominatim rate limit (1 request per second)
             $this->respectRateLimit();
 
-            $response = $this->client->get(config('geo.nominatim.base_url').'/search', [
+            $response = $this->client->get(config('geo.nominatim.url').'/search', [
                 'query' => [
                     'q' => $address,
                     'format' => 'json',

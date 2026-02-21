@@ -1,0 +1,405 @@
+name: Bookings
+description: |-
+
+  APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/bookings
+    metadata:
+      custom: []
+      groupName: Bookings
+      groupDescription: |-
+
+        APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List bookings'
+      description: 'Returns a paginated list of bookings filtered by user role. Shop owners see their bookings, providers see their accepted bookings.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status (pending, confirmed, completed, cancelled).'
+        required: false
+        example: confirmed
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: confirmed
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: 'http://localhost:3000'
+          access-control-allow-credentials: 'true'
+          access-control-expose-headers: 'X-RateLimit-Limit, X-RateLimit-Remaining'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/bookings/{id}'
+    metadata:
+      custom: []
+      groupName: Bookings
+      groupDescription: |-
+
+        APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get booking details'
+      description: 'Retrieve detailed information about a specific booking including service request, provider, payments, and ratings.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the booking.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      booking:
+        custom: []
+        name: booking
+        description: 'The booking ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      booking: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: 'http://localhost:3000'
+          access-control-allow-credentials: 'true'
+          access-control-expose-headers: 'X-RateLimit-Limit, X-RateLimit-Remaining'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/bookings/{booking}/complete'
+    metadata:
+      custom: []
+      groupName: Bookings
+      groupDescription: |-
+
+        APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Complete a booking'
+      description: 'Mark a booking as completed and trigger payout processing to the provider.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      booking:
+        custom: []
+        name: booking
+        description: 'The booking ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      booking: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "data": {
+              "id": 1,
+              "status": "completed"
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/bookings/{booking}/cancel'
+    metadata:
+      custom: []
+      groupName: Bookings
+      groupDescription: |-
+
+        APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel a booking'
+      description: 'Cancel a booking and initiate a refund if applicable.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      booking:
+        custom: []
+        name: booking
+        description: 'The booking ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      booking: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for cancellation.'
+        required: true
+        example: 'Provider is no longer available'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Provider is no longer available'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/bookings/{booking}/rate'
+    metadata:
+      custom: []
+      groupName: Bookings
+      groupDescription: |-
+
+        APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Rate a booking'
+      description: 'Submit a rating for a completed booking. Shop owners can rate providers and vice versa.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      booking:
+        custom: []
+        name: booking
+        description: 'The booking ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      booking: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      rating:
+        custom: []
+        name: rating
+        description: 'Rating from 1 to 5 stars.'
+        required: true
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      comment:
+        custom: []
+        name: comment
+        description: 'Optional comment about the rating.'
+        required: false
+        example: 'Excellent service!'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      rating: 5
+      comment: 'Excellent service!'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: |-
+          {
+            "data": {
+              "id": 1,
+              "rating": 5,
+              "comment": "Excellent service!"
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/bookings/{booking}/payment-intent'
+    metadata:
+      custom: []
+      groupName: Bookings
+      groupDescription: |-
+
+        APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create payment intent'
+      description: 'Create a Stripe payment intent for a booking. Shop owners use this to initiate payment for confirmed bookings.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      booking:
+        custom: []
+        name: booking
+        description: 'The booking ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      booking: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "client_secret": "pi_xxx_secret_xxx",
+            "amount": 15000,
+            "payment_id": 1
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

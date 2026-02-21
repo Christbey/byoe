@@ -14,8 +14,7 @@ class AcceptServiceRequestAction
      */
     public function __construct(
         protected BookingService $bookingService
-    ) {
-    }
+    ) {}
 
     /**
      * Execute the action.

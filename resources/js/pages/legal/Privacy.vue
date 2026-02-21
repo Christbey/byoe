@@ -17,7 +17,7 @@ defineProps<{
         <p>
             {{ company }} ("we", "us", or "our") is committed to protecting your personal information. This
             Privacy Policy explains what we collect, how we use it, and your rights regarding your data when
-            you use the BYOE platform.
+            you use the ShiftFinder platform.
         </p>
 
         <h2>1. Information We Collect</h2>

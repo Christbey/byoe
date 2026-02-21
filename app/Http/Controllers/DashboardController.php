@@ -52,7 +52,7 @@ class DashboardController extends Controller
                     'completed_bookings' => 0,
                     'average_rating' => 0,
                 ],
-                'upcoming_bookings' => [],
+                'available_requests' => [],
                 'recent_activity' => [],
             ]);
         }
@@ -83,15 +83,14 @@ class DashboardController extends Controller
             ->where('status', 'completed')
             ->count();
 
-        $upcomingBookings = Booking::with(['serviceRequest.shopLocation.shop'])
-            ->where('provider_id', $provider->id)
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->whereHas('serviceRequest', function ($query) {
-                $query->where('service_date', '>=', now())
-                    ->where('service_date', '<=', now()->addDays(14));
-            })
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
+        // Available service requests in the area
+        $availableRequests = ServiceRequest::query()
+            ->where('status', 'open')
+            ->where('expires_at', '>', now())
+            ->where('service_date', '>=', now())
+            ->with(['shopLocation.shop'])
+            ->orderBy('service_date')
+            ->limit(10)
             ->get();
 
         $recentActivity = Booking::with(['serviceRequest.shopLocation.shop'])
@@ -112,7 +111,7 @@ class DashboardController extends Controller
                 'completed_bookings' => $completedBookingsCount,
                 'average_rating' => round((float) $provider->average_rating, 1),
             ],
-            'upcoming_bookings' => $upcomingBookings,
+            'available_requests' => $availableRequests,
             'recent_activity' => $recentActivity,
         ]);
     }

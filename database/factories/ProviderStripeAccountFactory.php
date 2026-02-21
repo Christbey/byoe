@@ -19,7 +19,7 @@ class ProviderStripeAccountFactory extends Factory
     {
         return [
             'provider_id' => Provider::factory(),
-            'stripe_account_id' => 'acct_' . fake()->unique()->regexify('[A-Za-z0-9]{16}'),
+            'stripe_account_id' => 'acct_'.fake()->unique()->regexify('[A-Za-z0-9]{16}'),
             'details_submitted' => false,
             'charges_enabled' => false,
             'payouts_enabled' => false,

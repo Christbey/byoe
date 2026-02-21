@@ -10,8 +10,8 @@ class CreateShopAction
     /**
      * Execute the action.
      *
-     * @param array $validated The validated shop data
-     * @param User $user The user who owns the shop
+     * @param  array  $validated  The validated shop data
+     * @param  User  $user  The user who owns the shop
      * @return Shop The created shop
      */
     public function __invoke(array $validated, User $user): Shop

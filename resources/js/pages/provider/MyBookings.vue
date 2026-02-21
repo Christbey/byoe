@@ -80,10 +80,14 @@ const formatDate = (date: string) => {
 };
 
 const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-    });
+    if (!time) return '';
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
 

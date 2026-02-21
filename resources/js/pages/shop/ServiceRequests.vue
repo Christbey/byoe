@@ -4,11 +4,13 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { ServiceRequest, Booking, PaginatedResponse } from '@/types/marketplace';
-import Card from '@/components/ui/card/Card.vue';
-import CardContent from '@/components/ui/card/CardContent.vue';
 import { Button } from '@/components/ui/button';
 import Badge from '@/components/ui/badge/Badge.vue';
 import PageHelp from '@/components/marketplace/PageHelp.vue';
+import PageHeader from '@/components/ui/page-header/PageHeader.vue';
+import ListItem from '@/components/marketplace/ListItem.vue';
+import EmptyState from '@/components/ui/empty-state/EmptyState.vue';
+import Icon from '@/components/ui/icon/Icon.vue';
 
 interface Props {
     tab?: string;
@@ -125,8 +127,16 @@ const formatCurrency = (amount: number) =>
 const formatDate = (date: string) =>
     new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(date));
 
-const formatTime = (time: string) =>
-    new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+const formatTime = (time: string) => {
+    if (!time) return '';
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
 
 const stepLabels = ['Pending', 'Confirmed', 'In Progress', 'Complete'];
 const statusStep = (status: string) =>
@@ -137,22 +147,19 @@ const statusStep = (status: string) =>
     <Head title="Service Requests" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-            <!-- Header -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div class="space-y-1">
-                    <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Service Requests</h1>
-                    <p class="text-sm text-muted-foreground md:text-base">
-                        {{ tab === 'bookings' ? 'Track your confirmed bookings with providers' : 'Manage your posted service requests' }}
-                    </p>
-                </div>
-                <Button v-if="tab === 'requests'" as="a" href="/shop/service-requests/create" class="w-full sm:w-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 mr-2">
-                        <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-                    </svg>
-                    Create Request
-                </Button>
-            </div>
+        <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
+            <!-- Page Header -->
+            <PageHeader
+                title="Service Requests"
+                :description="tab === 'bookings' ? 'Track your confirmed bookings with providers' : 'Manage your posted service requests'"
+            >
+                <template #action>
+                    <Button v-if="tab === 'requests'" as="a" href="/shop/service-requests/create">
+                        <Icon name="Plus" size="sm" class="mr-2" />
+                        Create Request
+                    </Button>
+                </template>
+            </PageHeader>
 
             <!-- Tabs -->
             <div class="flex gap-1 border-b">
@@ -179,18 +186,14 @@ const statusStep = (status: string) =>
             <!-- ── REQUESTS TAB ── -->
             <template v-if="tab === 'requests'">
                 <!-- No shop profile -->
-                <Card v-if="!requests">
-                    <CardContent class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-muted-foreground mb-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016 2.993 2.993 0 002.25-1.016 3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-16.5 0h16.5" />
-                        </svg>
-                        <h3 class="text-lg font-semibold mb-2">Set up your shop profile first</h3>
-                        <p class="text-sm text-muted-foreground max-w-md mb-4">
-                            Create your shop profile before posting service requests.
-                        </p>
-                        <Button as="a" href="/settings/profile?tab=shop">Set Up Shop Profile</Button>
-                    </CardContent>
-                </Card>
+                <EmptyState
+                    v-if="!requests"
+                    icon="Store"
+                    title="Set up your shop profile first"
+                    description="Create your shop profile before posting service requests."
+                    action-label="Set Up Shop Profile"
+                    action-href="/settings/profile?tab=shop"
+                />
 
                 <template v-else>
                 <PageHelp storage-key="shop-service-requests" :steps="[
@@ -219,72 +222,72 @@ const statusStep = (status: string) =>
                 </div>
 
                 <!-- List -->
-                <div v-if="requests.data.length > 0" class="space-y-4">
-                    <Card v-for="request in requests.data" :key="request.id">
-                        <CardContent class="pt-6">
-                            <div class="flex flex-col gap-3">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="flex-1 min-w-0">
-                                        <h3 class="font-semibold text-lg leading-snug">{{ request.title }}</h3>
-                                        <p class="text-sm text-muted-foreground mt-0.5">
-                                            {{ formatDate(request.service_date || request.start_time) }}
-                                            <template v-if="request.start_time">
-                                                · {{ formatTime(request.start_time) }} – {{ formatTime(request.end_time || '') }}
-                                            </template>
-                                        </p>
-                                    </div>
-                                    <Badge :variant="request.status_variant">
-                                        {{ request.status_label }}
-                                    </Badge>
-                                </div>
+                <div v-if="requests.data.length > 0" class="space-y-3">
+                    <ListItem
+                        v-for="request in requests.data"
+                        :key="request.id"
+                        status="default"
+                    >
+                        <template #header>
+                            <h3 class="font-semibold text-base">{{ request.title }}</h3>
+                        </template>
 
-                                <div v-if="request.shop_location" class="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0">
-                                        <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" />
-                                    </svg>
-                                    {{ request.shop_location.address_line_1 }}, {{ request.shop_location.city }}, {{ request.shop_location.state }}
+                        <template #content>
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Icon name="Calendar" size="xs" />
+                                    <span>{{ formatDate(request.service_date || request.start_time) }}</span>
+                                    <template v-if="request.start_time">
+                                        <span>•</span>
+                                        <Icon name="Clock" size="xs" />
+                                        <span>{{ formatTime(request.start_time) }} – {{ formatTime(request.end_time || '') }}</span>
+                                    </template>
                                 </div>
-
-                                <div class="flex items-center justify-between gap-4 pt-2 border-t">
-                                    <div class="flex items-baseline gap-2">
-                                        <span class="text-xl font-bold">{{ formatCurrency(request.price) }}</span>
-                                        <span class="text-xs text-muted-foreground">Expires {{ formatDate(request.expires_at) }}</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <Button as="a" :href="`/shop/service-requests/${request.id}`" variant="outline" size="sm">View</Button>
-                                        <Button
-                                            v-if="request.status === 'open'"
-                                            variant="destructive"
-                                            size="sm"
-                                            :disabled="cancellingRequestId === request.id"
-                                            @click="handleCancelRequest(request.id)"
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </div>
+                                <div v-if="request.shop_location" class="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Icon name="MapPin" size="xs" />
+                                    <span>{{ request.shop_location.address_line_1 }}, {{ request.shop_location.city }}, {{ request.shop_location.state }}</span>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </template>
+
+                        <template #footer>
+                            <div class="flex items-baseline gap-2 text-xs text-muted-foreground">
+                                <span class="text-lg font-bold text-foreground">{{ formatCurrency(request.price) }}</span>
+                                <span>· Expires {{ formatDate(request.expires_at) }}</span>
+                            </div>
+                        </template>
+
+                        <template #badge>
+                            <Badge :variant="request.status_variant">
+                                {{ request.status_label }}
+                            </Badge>
+                        </template>
+
+                        <template #action>
+                            <div class="flex items-center gap-2">
+                                <Button as="a" :href="`/shop/service-requests/${request.id}`" variant="outline" size="sm">View</Button>
+                                <Button
+                                    v-if="request.status === 'open'"
+                                    variant="destructive"
+                                    size="sm"
+                                    :disabled="cancellingRequestId === request.id"
+                                    @click="handleCancelRequest(request.id)"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </template>
+                    </ListItem>
                 </div>
 
-                <Card v-else>
-                    <CardContent class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-muted-foreground mb-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                        </svg>
-                        <h3 class="text-lg font-semibold mb-2">No requests found</h3>
-                        <p class="text-sm text-muted-foreground max-w-md mb-4">
-                            {{ activeFilter === 'all' ? 'You haven\'t posted any service requests yet.' : 'No requests match this filter.' }}
-                        </p>
-                        <Button as="a" href="/shop/service-requests/create">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 mr-2">
-                                <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-                            </svg>
-                            Create Your First Request
-                        </Button>
-                    </CardContent>
-                </Card>
+                <EmptyState
+                    v-else
+                    icon="FileX"
+                    title="No requests found"
+                    :description="activeFilter === 'all' ? 'You haven\'t posted any service requests yet.' : 'No requests match this filter.'"
+                    :action-label="activeFilter === 'all' ? 'Create Your First Request' : undefined"
+                    :action-href="activeFilter === 'all' ? '/shop/service-requests/create' : undefined"
+                />
 
                 <div v-if="requests.current_page < requests.last_page" class="flex justify-center pt-2">
                     <Button variant="outline" @click="handleLoadMoreRequests">Load More</Button>
@@ -298,18 +301,14 @@ const statusStep = (status: string) =>
             <!-- ── BOOKINGS TAB ── -->
             <template v-if="tab === 'bookings'">
                 <!-- No shop profile -->
-                <Card v-if="!bookings">
-                    <CardContent class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-muted-foreground mb-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016 2.993 2.993 0 002.25-1.016 3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-16.5 0h16.5" />
-                        </svg>
-                        <h3 class="text-lg font-semibold mb-2">Set up your shop profile first</h3>
-                        <p class="text-sm text-muted-foreground max-w-md mb-4">
-                            Create your shop profile to start posting service requests and receiving bookings.
-                        </p>
-                        <Button as="a" href="/settings/profile?tab=shop">Set Up Shop Profile</Button>
-                    </CardContent>
-                </Card>
+                <EmptyState
+                    v-if="!bookings"
+                    icon="Store"
+                    title="Set up your shop profile first"
+                    description="Create your shop profile to start posting service requests and receiving bookings."
+                    action-label="Set Up Shop Profile"
+                    action-href="/settings/profile?tab=shop"
+                />
 
                 <template v-else>
                 <PageHelp storage-key="shop-bookings" :steps="[
@@ -338,114 +337,116 @@ const statusStep = (status: string) =>
                 </div>
 
                 <!-- List -->
-                <div v-if="bookings.data.length > 0" class="space-y-4">
-                    <Card v-for="booking in bookings.data" :key="booking.id">
-                        <CardContent class="pt-6">
-                            <div class="flex flex-col gap-4">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="flex-1 min-w-0 space-y-1">
-                                        <h3 class="font-semibold text-lg">{{ booking.service_request?.title || 'Service Booking' }}</h3>
-                                        <p class="text-sm text-muted-foreground">
-                                            {{ formatDate(booking.service_request?.service_date || '') }}
-                                            <template v-if="booking.service_request?.start_time">
-                                                · {{ formatTime(booking.service_request.start_time) }} – {{ formatTime(booking.service_request.end_time || '') }}
-                                            </template>
-                                        </p>
-                                    </div>
-                                    <Badge :variant="booking.status_variant">
-                                        {{ booking.status_label }}
-                                    </Badge>
-                                </div>
-
-                                <!-- Provider info -->
-                                <div v-if="booking.provider" class="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                                    <div class="size-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 text-primary">
-                                            <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium">{{ booking.provider.user?.name || 'Provider' }}</p>
-                                        <p class="text-xs text-muted-foreground">
-                                            {{ booking.provider.years_experience }} yrs exp · ⭐ {{ Number(booking.provider.average_rating).toFixed(1) }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- Progress bar -->
-                                <div v-if="booking.status !== 'cancelled'" class="space-y-1">
-                                    <div class="flex items-center gap-1.5">
-                                        <div
-                                            v-for="step in 4"
-                                            :key="step"
-                                            class="flex-1 h-1.5 rounded-full transition-colors"
-                                            :class="statusStep(booking.status) >= step ? 'bg-primary' : 'bg-muted'"
-                                        />
-                                    </div>
-                                    <div class="flex">
-                                        <span
-                                            v-for="(label, i) in stepLabels"
-                                            :key="i"
-                                            class="flex-1 text-[10px] text-center"
-                                            :class="statusStep(booking.status) > i ? 'text-primary font-medium' : 'text-muted-foreground'"
-                                        >{{ label }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Amount + actions -->
-                                <div class="flex items-center justify-between gap-4 pt-2 border-t">
-                                    <div class="space-y-0.5">
-                                        <p class="text-xl font-bold">{{ formatCurrency(booking.service_price) }}</p>
-                                        <p class="text-xs text-muted-foreground">Platform fee: {{ formatCurrency(booking.platform_fee) }}</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <Button as="a" :href="`/shop/bookings/${booking.id}`" variant="outline" size="sm">View</Button>
-                                        <Button
-                                            v-if="booking.status === 'in_progress' || booking.status === 'confirmed'"
-                                            size="sm"
-                                            :disabled="completingBookingId === booking.id"
-                                            @click="handleCompleteBooking(booking.id)"
-                                        >
-                                            Mark Complete
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <!-- Rating prompt -->
-                                <div v-if="ratingBookingId === booking.id" class="p-4 bg-muted/50 rounded-lg space-y-3">
-                                    <p class="text-sm font-medium">Rate this provider</p>
-                                    <div class="flex items-center gap-2">
-                                        <button
-                                            v-for="star in 5"
-                                            :key="star"
-                                            type="button"
-                                            class="text-2xl transition-colors"
-                                            :class="star <= rating ? 'text-yellow-500' : 'text-muted-foreground'"
-                                            @click="rating = star"
-                                        >★</button>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <Button size="sm" @click="handleSubmitRating(booking.id)">Submit Rating</Button>
-                                        <Button size="sm" variant="ghost" @click="ratingBookingId = null">Skip</Button>
-                                    </div>
+                <div v-if="bookings.data.length > 0" class="space-y-3">
+                    <div v-for="booking in bookings.data" :key="booking.id" class="border rounded-lg p-5 space-y-4 transition-all hover:shadow-md hover:border-primary/50">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0 space-y-1.5">
+                                <h3 class="font-semibold text-base">{{ booking.service_request?.title || 'Service Booking' }}</h3>
+                                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Icon name="Calendar" size="xs" />
+                                    <span>{{ formatDate(booking.service_request?.service_date || '') }}</span>
+                                    <template v-if="booking.service_request?.start_time">
+                                        <span>•</span>
+                                        <Icon name="Clock" size="xs" />
+                                        <span>{{ formatTime(booking.service_request.start_time) }} – {{ formatTime(booking.service_request.end_time || '') }}</span>
+                                    </template>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                            <Badge :variant="booking.status_variant">
+                                {{ booking.status_label }}
+                            </Badge>
+                        </div>
+
+                        <!-- Provider info -->
+                        <div v-if="booking.provider" class="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                            <div class="size-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <Icon name="User" size="sm" class="text-primary" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium">{{ booking.provider.user?.name || 'Provider' }}</p>
+                                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Icon name="Briefcase" size="xs" />
+                                    <span>{{ booking.provider.years_experience }} yrs exp</span>
+                                    <span>•</span>
+                                    <Icon name="Star" size="xs" class="fill-current" />
+                                    <span>{{ Number(booking.provider.average_rating).toFixed(1) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress bar -->
+                        <div v-if="booking.status !== 'cancelled'" class="space-y-1">
+                            <div class="flex items-center gap-1.5">
+                                <div
+                                    v-for="step in 4"
+                                    :key="step"
+                                    class="flex-1 h-1.5 rounded-full transition-colors"
+                                    :class="statusStep(booking.status) >= step ? 'bg-primary' : 'bg-muted'"
+                                />
+                            </div>
+                            <div class="flex">
+                                <span
+                                    v-for="(label, i) in stepLabels"
+                                    :key="i"
+                                    class="flex-1 text-[10px] text-center"
+                                    :class="statusStep(booking.status) > i ? 'text-primary font-medium' : 'text-muted-foreground'"
+                                >{{ label }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Amount + actions -->
+                        <div class="flex items-center justify-between gap-4 pt-3 border-t">
+                            <div class="space-y-0.5">
+                                <div class="flex items-baseline gap-1">
+                                    <span class="text-xl font-bold text-foreground">{{ formatCurrency(booking.service_price) }}</span>
+                                </div>
+                                <div class="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Icon name="Receipt" size="xs" />
+                                    <span>Platform fee: {{ formatCurrency(booking.platform_fee) }}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <Button as="a" :href="`/shop/bookings/${booking.id}`" variant="outline" size="sm">View</Button>
+                                <Button
+                                    v-if="booking.status === 'in_progress' || booking.status === 'confirmed'"
+                                    size="sm"
+                                    :disabled="completingBookingId === booking.id"
+                                    @click="handleCompleteBooking(booking.id)"
+                                >
+                                    Mark Complete
+                                </Button>
+                            </div>
+                        </div>
+
+                        <!-- Rating prompt -->
+                        <div v-if="ratingBookingId === booking.id" class="p-4 bg-muted/50 rounded-lg space-y-3">
+                            <p class="text-sm font-medium">Rate this provider</p>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    v-for="star in 5"
+                                    :key="star"
+                                    type="button"
+                                    class="text-2xl transition-colors"
+                                    :class="star <= rating ? 'text-yellow-500' : 'text-muted-foreground'"
+                                    @click="rating = star"
+                                >★</button>
+                            </div>
+                            <div class="flex gap-2">
+                                <Button size="sm" @click="handleSubmitRating(booking.id)">Submit Rating</Button>
+                                <Button size="sm" variant="ghost" @click="ratingBookingId = null">Skip</Button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <Card v-else>
-                    <CardContent class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-muted-foreground mb-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                        </svg>
-                        <h3 class="text-lg font-semibold mb-2">No bookings found</h3>
-                        <p class="text-sm text-muted-foreground max-w-md mb-4">
-                            {{ activeFilter === 'all' ? 'Bookings appear here when a provider accepts one of your service requests.' : 'No ' + activeFilter + ' bookings found.' }}
-                        </p>
-                        <Button v-if="activeFilter === 'all'" as="a" href="/shop/service-requests">Create a Request</Button>
-                    </CardContent>
-                </Card>
+                <EmptyState
+                    v-else
+                    icon="CalendarOff"
+                    title="No bookings found"
+                    :description="activeFilter === 'all' ? 'Bookings appear here when a provider accepts one of your service requests.' : 'No ' + activeFilter + ' bookings found.'"
+                    :action-label="activeFilter === 'all' ? 'Create a Request' : undefined"
+                    :action-href="activeFilter === 'all' ? '/shop/service-requests' : undefined"
+                />
 
                 <div v-if="bookings.current_page < bookings.last_page" class="flex justify-center pt-2">
                     <Button variant="outline" @click="handleLoadMoreBookings">Load More</Button>

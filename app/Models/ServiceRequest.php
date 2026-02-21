@@ -47,9 +47,7 @@ class ServiceRequest extends Model
     {
         return [
             'skills_required' => 'array',
-            'service_date' => 'datetime',
-            'start_time' => 'datetime',
-            'end_time' => 'datetime',
+            'service_date' => 'date',
             'price' => 'float',
             'expires_at' => 'datetime',
         ];

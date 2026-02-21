@@ -25,12 +25,12 @@ const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Provider Profile',
-        href: '/settings/profile?tab=provider',
+        title: 'Provider Settings',
+        href: '/settings/provider',
     },
     {
-        title: 'Edit',
-        href: '/settings/profile?tab=provider',
+        title: 'Edit Profile',
+        href: '/provider/profile/edit',
     },
 ];
 
@@ -411,7 +411,7 @@ const handleSubmit = () => {
                             type="button"
                             variant="outline"
                             as="a"
-                            :href="provider ? '/provider/profile' : '/provider/dashboard'"
+                            :href="provider ? '/settings/provider' : '/provider/onboarding'"
                             :disabled="form.processing"
                             class="w-full sm:w-auto sm:flex-1"
                         >

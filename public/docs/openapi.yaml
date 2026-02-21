@@ -1,0 +1,1076 @@
+openapi: 3.0.3
+info:
+  title: 'Laravel API Documentation'
+  description: 'API for connecting shops with service providers. Manage service requests, bookings, payments, and provider interactions.'
+  version: 1.0.0
+servers:
+  -
+    url: 'http://byoe.test'
+tags:
+  -
+    name: Industries
+    description: 'APIs for retrieving industry data including skills and service request templates.'
+  -
+    name: Authentication
+    description: 'APIs for user authentication including login, registration, and token management.'
+  -
+    name: 'Service Requests'
+    description: 'APIs for managing service requests (job postings created by shops for providers to accept).'
+  -
+    name: Bookings
+    description: 'APIs for managing bookings (accepted service requests). Providers and shop owners can view, complete, cancel, and rate bookings.'
+  -
+    name: Endpoints
+    description: ''
+  -
+    name: Provider
+    description: 'APIs for providers to manage their bookings and accept service requests.'
+  -
+    name: Shop
+    description: 'APIs for shop owners to manage their locations and service requests.'
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'You can retrieve your authentication token by logging in via the <code>POST /api/v1/auth/login</code> endpoint. The token must be prefixed with "Bearer " in the Authorization header.'
+security:
+  -
+    default: {  }
+paths:
+  /api/v1/industries:
+    get:
+      summary: 'List industries'
+      operationId: list_industries
+      description: 'Returns all active industries sorted by sort order and name.'
+      parameters: {  }
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: [{ id: 1, name: 'Food & Beverage', description: 'Restaurants, cafes, and food service' }]
+      tags:
+        - Industries
+  '/api/v1/industries/{industry}':
+    get:
+      summary: 'Get industry details'
+      operationId: get_industry_details
+      description: 'Retrieve a specific industry including its associated skills and service request templates.'
+      parameters:
+        -
+          name: industry
+          in: path
+          description: 'The industry ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { id: 1, name: 'Food & Beverage', skills: [{ id: 1, name: Barista }], templates: [{ id: 1, title: 'Morning Shift Coverage' }] }
+      tags:
+        - Industries
+  /api/v1/auth/register:
+    post:
+      summary: Register
+      operationId: register
+      description: 'Create a new user account and return an access token.'
+      parameters: {  }
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user: { id: 1, name: 'John Doe', email: newshop@example.com }
+                  token: 1|abc123...
+                  expires_at: '2026-03-22T10:00:00.000000Z'
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: "The user's full name."
+                  example: 'John Doe'
+                email:
+                  type: string
+                  description: "The user's email address."
+                  example: newshop@example.com
+                password:
+                  type: string
+                  description: "The user's password (min 8 characters)."
+                  example: password123
+                role:
+                  type: string
+                  description: 'User role (shop_owner or provider).'
+                  example: shop_owner
+                device_name:
+                  type: string
+                  description: 'Optional device name for the token.'
+                  example: 'iPhone 14'
+                password_confirmation:
+                  type: string
+                  description: 'Password confirmation.'
+                  example: password123
+              required:
+                - name
+                - email
+                - password
+                - role
+                - password_confirmation
+  /api/v1/auth/login:
+    post:
+      summary: Login
+      operationId: login
+      description: 'Authenticate a user and return an access token for API requests.'
+      parameters: {  }
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user: { id: 1, name: 'John Doe', email: shop@example.com }
+                  token: 1|abc123...
+                  expires_at: '2026-03-22T10:00:00.000000Z'
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: "The user's email address."
+                  example: shop@example.com
+                password:
+                  type: string
+                  description: "The user's password."
+                  example: password123
+                device_name:
+                  type: string
+                  description: 'Optional device name for the token.'
+                  example: 'iPhone 14'
+              required:
+                - email
+                - password
+  /api/v1/auth/logout:
+    post:
+      summary: Logout
+      operationId: logout
+      description: 'Revoke the current access token and log the user out.'
+      parameters: {  }
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Successfully logged out'
+      tags:
+        - Authentication
+  /api/v1/auth/me:
+    get:
+      summary: 'Get current user'
+      operationId: get_current_user
+      description: "Retrieve the authenticated user's profile information including shop and provider relationships."
+      parameters: {  }
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { id: 1, name: 'John Doe', email: shop@example.com, shop: { id: 1, business_name: 'Coffee Shop' } }
+      tags:
+        - Authentication
+  /api/v1/service-requests:
+    get:
+      summary: 'List service requests'
+      operationId: list_service_requests
+      description: "Returns a paginated list of service requests filtered by user role.\nShop owners see their own requests, providers see open requests, admins see all."
+      parameters:
+        -
+          name: status
+          in: query
+          description: 'Filter by status.'
+          required: false
+          schema:
+            type: string
+            example: open
+        -
+          name: skills
+          in: query
+          description: 'Filter by required skills.'
+          required: false
+          schema:
+            type: 'string[]'
+            example: null
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - 'Service Requests'
+    post:
+      summary: 'Store a newly created service request.'
+      operationId: store_a_newly_created_service_request.
+      description: ''
+      parameters: {  }
+      responses: {  }
+      tags:
+        - 'Service Requests'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shop_location_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the shop_locations table.'
+                  example: architecto
+                title:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: 'n'
+                description:
+                  type: string
+                  description: ''
+                  example: 'Eius et animi quos velit et.'
+                skills_required:
+                  type: object
+                  description: ''
+                  example: null
+                service_date:
+                  type: string
+                  description: 'Must be a valid date. Must be a date after or equal to <code>today</code>.'
+                  example: '2052-03-16'
+                start_time:
+                  type: string
+                  description: 'Must be a valid date in the format <code>H:i</code>.'
+                  example: '01:33'
+                end_time:
+                  type: string
+                  description: 'Must be a valid date in the format <code>H:i</code>. Must be a date after <code>start_time</code>.'
+                  example: '2052-03-16'
+                price:
+                  type: number
+                  description: ''
+                  example: 4326.41688
+              required:
+                - shop_location_id
+                - title
+                - description
+                - service_date
+                - start_time
+                - end_time
+  '/api/v1/service-requests/{id}':
+    get:
+      summary: 'Display the specified service request.'
+      operationId: display_the_specified_service_request.
+      description: ''
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the service request.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - 'Service Requests'
+    put:
+      summary: 'Update the specified service request.'
+      operationId: update_the_specified_service_request.
+      description: ''
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the service request.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+      responses: {  }
+      tags:
+        - 'Service Requests'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: b
+                description:
+                  type: string
+                  description: ''
+                  example: 'Eius et animi quos velit et.'
+                skills_required:
+                  type: object
+                  description: ''
+                  example: null
+                service_date:
+                  type: string
+                  description: 'Must be a valid date. Must be a date after or equal to <code>today</code>.'
+                  example: '2052-03-16'
+                start_time:
+                  type: string
+                  description: 'Must be a valid date in the format <code>H:i</code>.'
+                  example: '01:33'
+                end_time:
+                  type: string
+                  description: 'Must be a valid date in the format <code>H:i</code>.'
+                  example: '01:33'
+              required: {  }
+    patch:
+      summary: 'Update the specified service request.'
+      operationId: update_the_specified_service_request.
+      description: ''
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the service request.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+      responses: {  }
+      tags:
+        - 'Service Requests'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: b
+                description:
+                  type: string
+                  description: ''
+                  example: 'Eius et animi quos velit et.'
+                skills_required:
+                  type: object
+                  description: ''
+                  example: null
+                service_date:
+                  type: string
+                  description: 'Must be a valid date. Must be a date after or equal to <code>today</code>.'
+                  example: '2052-03-16'
+                start_time:
+                  type: string
+                  description: 'Must be a valid date in the format <code>H:i</code>.'
+                  example: '01:33'
+                end_time:
+                  type: string
+                  description: 'Must be a valid date in the format <code>H:i</code>.'
+                  example: '01:33'
+              required: {  }
+    delete:
+      summary: 'Remove the specified service request (cancel).'
+      operationId: remove_the_specified_service_request_(cancel).
+      description: ''
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the service request.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+      responses: {  }
+      tags:
+        - 'Service Requests'
+  '/api/v1/service-requests/{serviceRequest}/confirm-payment':
+    post:
+      summary: 'Confirm payment for a service request.'
+      operationId: confirm_payment_for_a_service_request.
+      description: "Creates a Stripe payment intent and transitions the service request to 'open' status."
+      parameters:
+        -
+          name: serviceRequest
+          in: path
+          description: ''
+          required: true
+          schema:
+            type: string
+            example: architecto
+      responses: {  }
+      tags:
+        - 'Service Requests'
+  /api/v1/bookings:
+    get:
+      summary: 'List bookings'
+      operationId: list_bookings
+      description: 'Returns a paginated list of bookings filtered by user role. Shop owners see their bookings, providers see their accepted bookings.'
+      parameters:
+        -
+          name: status
+          in: query
+          description: 'Filter by status (pending, confirmed, completed, cancelled).'
+          required: false
+          schema:
+            type: string
+            example: confirmed
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Bookings
+  '/api/v1/bookings/{id}':
+    get:
+      summary: 'Get booking details'
+      operationId: get_booking_details
+      description: 'Retrieve detailed information about a specific booking including service request, provider, payments, and ratings.'
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the booking.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+        -
+          name: booking
+          in: path
+          description: 'The booking ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Bookings
+  '/api/v1/bookings/{booking}/complete':
+    post:
+      summary: 'Complete a booking'
+      operationId: complete_a_booking
+      description: 'Mark a booking as completed and trigger payout processing to the provider.'
+      parameters:
+        -
+          name: booking
+          in: path
+          description: 'The booking ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { id: 1, status: completed }
+      tags:
+        - Bookings
+  '/api/v1/bookings/{booking}/cancel':
+    post:
+      summary: 'Cancel a booking'
+      operationId: cancel_a_booking
+      description: 'Cancel a booking and initiate a refund if applicable.'
+      parameters:
+        -
+          name: booking
+          in: path
+          description: 'The booking ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses: {  }
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: 'Reason for cancellation.'
+                  example: 'Provider is no longer available'
+              required:
+                - reason
+  '/api/v1/bookings/{booking}/rate':
+    post:
+      summary: 'Rate a booking'
+      operationId: rate_a_booking
+      description: 'Submit a rating for a completed booking. Shop owners can rate providers and vice versa.'
+      parameters:
+        -
+          name: booking
+          in: path
+          description: 'The booking ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { id: 1, rating: 5, comment: 'Excellent service!' }
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  description: 'Rating from 1 to 5 stars.'
+                  example: 5
+                comment:
+                  type: string
+                  description: 'Optional comment about the rating.'
+                  example: 'Excellent service!'
+              required:
+                - rating
+  '/api/v1/bookings/{booking}/payment-intent':
+    post:
+      summary: 'Create payment intent'
+      operationId: create_payment_intent
+      description: 'Create a Stripe payment intent for a booking. Shop owners use this to initiate payment for confirmed bookings.'
+      parameters:
+        -
+          name: booking
+          in: path
+          description: 'The booking ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  client_secret: pi_xxx_secret_xxx
+                  amount: 15000
+                  payment_id: 1
+      tags:
+        - Bookings
+  /api/v1/payments:
+    get:
+      summary: 'Display a listing of payments.'
+      operationId: display_a_listing_of_payments.
+      description: 'Shop owners see payments for their bookings.'
+      parameters: {  }
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Endpoints
+  '/api/v1/payments/{id}':
+    get:
+      summary: 'Display the specified payment.'
+      operationId: display_the_specified_payment.
+      description: ''
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the payment.'
+          required: true
+          schema:
+            type: integer
+            example: 16
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Endpoints
+  /api/v1/payouts:
+    get:
+      summary: 'Display a listing of payouts.'
+      operationId: display_a_listing_of_payouts.
+      description: 'Providers see their own payouts.'
+      parameters: {  }
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Endpoints
+  '/api/v1/payouts/{id}':
+    get:
+      summary: 'Display the specified payout.'
+      operationId: display_the_specified_payout.
+      description: ''
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the payout.'
+          required: true
+          schema:
+            type: integer
+            example: 16
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Endpoints
+  /api/v1/provider/dashboard:
+    get:
+      summary: 'Get provider dashboard data.'
+      operationId: get_provider_dashboard_data.
+      description: ''
+      parameters: {  }
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Endpoints
+  /api/v1/shop/dashboard:
+    get:
+      summary: 'Get shop dashboard data.'
+      operationId: get_shop_dashboard_data.
+      description: ''
+      parameters: {  }
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Endpoints
+  /api/v1/shop/bookings:
+    get:
+      summary: "Get shop's bookings."
+      operationId: "get_shop's_bookings."
+      description: ''
+      parameters: {  }
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Endpoints
+  /api/v1/provider/bookings:
+    get:
+      summary: 'List provider bookings'
+      operationId: list_provider_bookings
+      description: "Returns the authenticated provider's bookings with optional filtering."
+      parameters:
+        -
+          name: status
+          in: query
+          description: 'Filter by status.'
+          required: false
+          schema:
+            type: string
+            example: confirmed
+        -
+          name: filter
+          in: query
+          description: 'Filter by upcoming or past.'
+          required: false
+          schema:
+            type: string
+            example: upcoming
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Provider
+  /api/v1/provider/available-requests:
+    get:
+      summary: 'List available service requests'
+      operationId: list_available_service_requests
+      description: "Returns open service requests that match the provider's skills and service area preferences."
+      parameters: {  }
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Provider
+  '/api/v1/provider/service-requests/{serviceRequest}/accept':
+    post:
+      summary: 'Accept service request'
+      operationId: accept_service_request
+      description: 'Accept an open service request and create a booking. Provider must be active and have completed Stripe onboarding.'
+      parameters:
+        -
+          name: serviceRequest
+          in: path
+          description: 'The service request ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { id: 1, status: confirmed, service_request: { id: 1, title: 'Barista needed' } }
+      tags:
+        - Provider
+  /api/v1/shop/locations:
+    get:
+      summary: 'List shop locations'
+      operationId: list_shop_locations
+      description: "Returns all locations for the authenticated shop owner's shop."
+      parameters: {  }
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Shop
+    post:
+      summary: 'Create shop location'
+      operationId: create_shop_location
+      description: 'Add a new location to the shop. First location is automatically set as primary.'
+      parameters: {  }
+      responses: {  }
+      tags:
+        - Shop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address_line_1:
+                  type: string
+                  description: 'Street address.'
+                  example: '123 Main St'
+                address_line_2:
+                  type: string
+                  description: 'Optional additional address info.'
+                  example: 'Suite 100'
+                city:
+                  type: string
+                  description: 'City name.'
+                  example: 'San Francisco'
+                state:
+                  type: string
+                  description: 'Two-letter state code.'
+                  example: CA
+                zip_code:
+                  type: string
+                  description: 'ZIP code.'
+                  example: '94102'
+                is_primary:
+                  type: boolean
+                  description: 'Whether this is the primary location.'
+                  example: true
+              required:
+                - address_line_1
+                - city
+                - state
+                - zip_code
+  '/api/v1/shop/locations/{id}':
+    get:
+      summary: 'Get location details'
+      operationId: get_location_details
+      description: 'Retrieve details for a specific shop location.'
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the location.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+        -
+          name: location
+          in: path
+          description: 'The location ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+      tags:
+        - Shop
+    put:
+      summary: 'Update shop location'
+      operationId: update_shop_location
+      description: "Modify an existing shop location's details."
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the location.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+        -
+          name: location
+          in: path
+          description: 'The location ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses: {  }
+      tags:
+        - Shop
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address_line_1:
+                  type: string
+                  description: 'Street address.'
+                  example: '456 Market St'
+                address_line_2:
+                  type: string
+                  description: 'Additional address info.'
+                  example: 'Floor 2'
+                city:
+                  type: string
+                  description: 'City name.'
+                  example: Oakland
+                state:
+                  type: string
+                  description: 'Two-letter state code.'
+                  example: CA
+                zip_code:
+                  type: string
+                  description: 'ZIP code.'
+                  example: '94607'
+                is_primary:
+                  type: boolean
+                  description: 'Whether this is the primary location.'
+                  example: false
+              required: {  }
+    patch:
+      summary: 'Update shop location'
+      operationId: update_shop_location
+      description: "Modify an existing shop location's details."
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the location.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+        -
+          name: location
+          in: path
+          description: 'The location ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses: {  }
+      tags:
+        - Shop
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address_line_1:
+                  type: string
+                  description: 'Street address.'
+                  example: '456 Market St'
+                address_line_2:
+                  type: string
+                  description: 'Additional address info.'
+                  example: 'Floor 2'
+                city:
+                  type: string
+                  description: 'City name.'
+                  example: Oakland
+                state:
+                  type: string
+                  description: 'Two-letter state code.'
+                  example: CA
+                zip_code:
+                  type: string
+                  description: 'ZIP code.'
+                  example: '94607'
+                is_primary:
+                  type: boolean
+                  description: 'Whether this is the primary location.'
+                  example: false
+              required: {  }
+    delete:
+      summary: 'Delete shop location'
+      operationId: delete_shop_location
+      description: 'Remove a shop location. Cannot delete locations with existing service requests.'
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'The ID of the location.'
+          required: true
+          schema:
+            type: string
+            example: architecto
+        -
+          name: location
+          in: path
+          description: 'The location ID.'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses: {  }
+      tags:
+        - Shop

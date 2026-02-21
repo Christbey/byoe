@@ -15,7 +15,7 @@ defineProps<{
 
     <LegalLayout title="Cookie Policy" :effective-date="effectiveDate">
         <p>
-            This Cookie Policy explains how {{ company }} uses cookies and similar technologies on the BYOE
+            This Cookie Policy explains how {{ company }} uses cookies and similar technologies on the ShiftFinder
             platform. By continuing to use the Platform, you consent to our use of cookies as described
             below.
         </p>

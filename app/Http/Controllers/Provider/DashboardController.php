@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
 use App\Models\Payout;
+use App\Models\ServiceRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,15 +39,14 @@ class DashboardController extends Controller
             ->where('status', 'paid')
             ->sum('amount');
 
-        // Upcoming bookings list
-        $upcomingBookings = Booking::with(['serviceRequest.shopLocation.shop'])
-            ->join('service_requests', 'service_requests.id', '=', 'bookings.service_request_id')
-            ->where('bookings.provider_id', $provider->id)
-            ->whereIn('bookings.status', ['pending', 'confirmed'])
-            ->where('service_requests.service_date', '>=', now())
-            ->orderBy('service_requests.service_date')
-            ->select('bookings.*')
-            ->limit(5)
+        // Available service requests in the area
+        $availableRequests = ServiceRequest::query()
+            ->where('status', 'open')
+            ->where('expires_at', '>', now())
+            ->where('service_date', '>=', now())
+            ->with(['shopLocation.shop'])
+            ->orderBy('service_date')
+            ->limit(10)
             ->get();
 
         return Inertia::render('provider/Dashboard', [
@@ -62,7 +61,7 @@ class DashboardController extends Controller
                 'total_earnings' => $earningsAllTime,
                 'pending_invitations' => 0,
             ],
-            'upcoming_bookings' => $upcomingBookings,
+            'available_requests' => $availableRequests,
         ]);
     }
 }

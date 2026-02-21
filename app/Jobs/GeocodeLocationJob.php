@@ -20,8 +20,7 @@ class GeocodeLocationJob implements ShouldQueue
      */
     public function __construct(
         public ShopLocation $shopLocation
-    ) {
-    }
+    ) {}
 
     /**
      * Execute the job.

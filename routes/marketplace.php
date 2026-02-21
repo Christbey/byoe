@@ -49,9 +49,9 @@ Route::prefix('shop')->name('shop.')->middleware(['auth', 'verified', 'role:shop
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
         Route::get('/profile', function (Request $request) {
             $subtab = $request->query('tab');
-            $params = array_filter(['tab' => 'shop', 'subtab' => $subtab]);
+            $params = $subtab ? ['subtab' => $subtab] : [];
 
-            return redirect('/settings/profile?'.http_build_query($params));
+            return redirect()->route('settings.shop', $params);
         })->name('profile');
 
         // Locations Resource — index redirects to profile locations tab
@@ -80,14 +80,17 @@ Route::prefix('shop')->name('shop.')->middleware(['auth', 'verified', 'role:shop
 
 // Provider Portal
 Route::prefix('provider')->name('provider.')->middleware(['auth', 'verified', 'role:provider|admin'])->group(function () {
-    // Profile setup — redirect to settings
-    Route::get('/profile/edit', fn () => redirect('/settings/profile?tab=provider'))->name('profile.edit');
+    // Onboarding walkthrough for new providers (before profile exists)
+    Route::get('/onboarding', [\App\Http\Controllers\Provider\OnboardingController::class, 'show'])->name('onboarding');
+
+    // Profile setup — show edit form
+    Route::get('/profile/edit', [ProviderProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProviderProfileController::class, 'update'])->name('profile.update');
 
     // All other provider routes — require an existing provider profile
     Route::middleware('provider.profile')->group(function () {
         Route::get('/dashboard', ProviderDashboardController::class)->name('dashboard');
-        Route::get('/profile', fn () => redirect('/settings/profile?tab=provider'))->name('profile');
+        Route::get('/profile', fn () => redirect()->route('settings.provider'))->name('profile');
         Route::get('/available-requests', AvailableRequestsController::class)->name('available-requests');
         Route::post('/requests/{serviceRequest}/accept', AcceptServiceRequestController::class)->name('requests.accept');
 

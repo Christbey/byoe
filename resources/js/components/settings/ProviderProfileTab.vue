@@ -79,7 +79,7 @@ const formatRatingDate = (date: string) =>
 const starArray = [5, 4, 3, 2, 1];
 
 const navigateToEdit = () => {
-    router.get('/settings/profile', { tab: 'provider', edit: '1' }, { preserveState: false });
+    router.visit('/provider/onboarding');
 };
 </script>
 

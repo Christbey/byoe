@@ -29,7 +29,7 @@ Thank you for your payment. Here is your receipt for this transaction.
 
 **Service Date:** {{ $payment->booking->serviceRequest->service_date->format('l, F j, Y') }}
 
-**Service Time:** {{ $payment->booking->serviceRequest->start_time->format('g:i A') }} - {{ $payment->booking->serviceRequest->end_time->format('g:i A') }}
+**Service Time:** {{ \Carbon\Carbon::createFromTimeString($payment->booking->serviceRequest->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::createFromTimeString($payment->booking->serviceRequest->end_time)->format('g:i A') }}
 
 ---
 

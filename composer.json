@@ -1,11 +1,13 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/vue-starter-kit",
+    "name": "shiftfinder/shiftfinder",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "ShiftFinder - Connect coffee shops with skilled baristas for flexible shift coverage.",
     "keywords": [
-        "laravel",
-        "framework"
+        "marketplace",
+        "gig-economy",
+        "coffee-shops",
+        "baristas"
     ],
     "license": "MIT",
     "require": {
@@ -22,6 +24,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "knuckleswtf/scribe": "^5.7",
         "laravel/boost": "^2.1",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",

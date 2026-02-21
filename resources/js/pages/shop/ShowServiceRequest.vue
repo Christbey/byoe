@@ -49,11 +49,15 @@ const formatDate = (date: string) => {
     }).format(new Date(date));
 };
 
-const formatTime = (datetime: string) => {
-    return new Intl.DateTimeFormat('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-    }).format(new Date(datetime));
+const formatTime = (time: string) => {
+    if (!time) return '';
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
 const formatDateTime = (datetime: string) => {

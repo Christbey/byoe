@@ -33,7 +33,7 @@ class PaymentReceipt extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payment Receipt - ' . $this->payment->formattedAmount(),
+            subject: 'Payment Receipt - '.$this->payment->formattedAmount(),
         );
     }
 

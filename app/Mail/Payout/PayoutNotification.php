@@ -33,7 +33,7 @@ class PayoutNotification extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payout Scheduled - ' . $this->payout->formattedAmount(),
+            subject: 'Payout Scheduled - '.$this->payout->formattedAmount(),
         );
     }
 

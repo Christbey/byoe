@@ -69,8 +69,16 @@ const formatCurrency = (amount: number) =>
 const formatDate = (date: string) =>
     date ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(date)) : '—';
 
-const formatTime = (time: string) =>
-    time ? new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+const formatTime = (time: string) => {
+    if (!time) return '';
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
 
 
 const stepLabels = ['Pending', 'Confirmed', 'In Progress', 'Complete'];

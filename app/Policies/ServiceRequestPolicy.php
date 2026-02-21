@@ -28,6 +28,11 @@ class ServiceRequestPolicy
 
         $serviceRequest->loadMissing('shopLocation.shop');
 
+        // Check if relationships exist
+        if (! $serviceRequest->shopLocation?->shop) {
+            return false;
+        }
+
         // Shop owner can view their own requests
         if ($serviceRequest->shopLocation->shop->user_id === $user->id) {
             return true;
@@ -83,6 +88,11 @@ class ServiceRequestPolicy
 
         $serviceRequest->loadMissing('shopLocation.shop');
 
+        // Check if relationships exist
+        if (! $serviceRequest->shopLocation?->shop) {
+            return false;
+        }
+
         // Shop owner can update their own requests (only if still open)
         return $serviceRequest->shopLocation->shop->user_id === $user->id
             && $serviceRequest->status === 'open';
@@ -100,6 +110,11 @@ class ServiceRequestPolicy
 
         $serviceRequest->loadMissing('shopLocation.shop');
 
+        // Check if relationships exist
+        if (! $serviceRequest->shopLocation?->shop) {
+            return false;
+        }
+
         // Shop owner can cancel their own requests (only if not filled)
         return $serviceRequest->shopLocation->shop->user_id === $user->id
             && in_array($serviceRequest->status, ['pending_payment', 'open']);
@@ -115,6 +130,11 @@ class ServiceRequestPolicy
         }
 
         $serviceRequest->loadMissing('shopLocation.shop');
+
+        // Check if relationships exist
+        if (! $serviceRequest->shopLocation?->shop) {
+            return false;
+        }
 
         return $serviceRequest->shopLocation->shop->user_id === $user->id;
     }
@@ -134,6 +154,11 @@ class ServiceRequestPolicy
 
         // Provider cannot accept their own shop's requests
         $serviceRequest->loadMissing('shopLocation.shop');
+
+        // Check if relationships exist
+        if (! $serviceRequest->shopLocation?->shop) {
+            return false;
+        }
 
         return $serviceRequest->shopLocation->shop->user_id !== $user->id;
     }

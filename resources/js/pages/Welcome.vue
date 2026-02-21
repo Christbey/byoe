@@ -19,7 +19,7 @@ withDefaults(
         <!-- Nav -->
         <header class="border-b">
             <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-                <span class="text-lg font-bold tracking-tight">byoe</span>
+                <span class="text-lg font-bold tracking-tight">ShiftFinder</span>
                 <nav class="flex items-center gap-3">
                     <Link
                         v-if="$page.props.auth.user"
@@ -167,7 +167,7 @@ withDefaults(
         <!-- Footer -->
         <footer class="border-t py-8">
             <div class="mx-auto max-w-5xl px-6 flex items-center justify-between text-sm text-muted-foreground">
-                <span>© {{ new Date().getFullYear() }} byoe</span>
+                <span>© {{ new Date().getFullYear() }} ShiftFinder</span>
                 <Link :href="login()" class="hover:text-foreground">Log in</Link>
             </div>
         </footer>

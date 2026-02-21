@@ -30,12 +30,12 @@ class BookingPolicy
         $booking->loadMissing(['provider.user', 'serviceRequest.shopLocation.shop']);
 
         // Provider can view their own bookings
-        if ($user->id === $booking->provider->user_id) {
+        if ($user->id === $booking->provider?->user_id) {
             return true;
         }
 
         // Shop owner can view bookings for their shops
-        if ($booking->serviceRequest->shopLocation->shop->user_id === $user->id) {
+        if ($booking->serviceRequest?->shopLocation?->shop?->user_id === $user->id) {
             return true;
         }
 
@@ -73,13 +73,18 @@ class BookingPolicy
 
         $booking->loadMissing(['provider.user', 'serviceRequest.shopLocation.shop']);
 
+        // Check if service request and relationships exist
+        if (! $booking->serviceRequest?->shopLocation?->shop) {
+            return false;
+        }
+
         // Shop owner can cancel their bookings
         if ($booking->serviceRequest->shopLocation->shop->user_id === $user->id) {
             return true;
         }
 
         // Provider can cancel their bookings before they're confirmed
-        if ($user->id === $booking->provider->user_id && $booking->status === 'pending') {
+        if ($user->id === $booking->provider?->user_id && $booking->status === 'pending') {
             return true;
         }
 
@@ -98,9 +103,14 @@ class BookingPolicy
 
         $booking->loadMissing(['provider.user', 'serviceRequest.shopLocation.shop']);
 
+        // Check if service request and relationships exist
+        if (! $booking->serviceRequest?->shopLocation?->shop) {
+            return false;
+        }
+
         // Both shop owner and provider can mark as complete
         return $booking->serviceRequest->shopLocation->shop->user_id === $user->id
-            || $user->id === $booking->provider->user_id;
+            || $user->id === $booking->provider?->user_id;
     }
 
     /**
@@ -110,13 +120,18 @@ class BookingPolicy
     {
         $booking->loadMissing(['provider.user', 'serviceRequest.shopLocation.shop']);
 
+        // Check if service request and relationships exist
+        if (! $booking->serviceRequest?->shopLocation?->shop) {
+            return false;
+        }
+
         // Shop owner can rate the provider
         if ($booking->serviceRequest->shopLocation->shop->user_id === $user->id) {
             return true;
         }
 
         // Provider can rate the shop
-        if ($user->id === $booking->provider->user_id) {
+        if ($user->id === $booking->provider?->user_id) {
             return true;
         }
 

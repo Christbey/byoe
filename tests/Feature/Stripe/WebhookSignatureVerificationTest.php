@@ -4,8 +4,6 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Provider;
 use App\Models\ServiceRequest;
-use App\Models\ShopLocation;
-use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Stripe\Event;
 use Stripe\Webhook;
@@ -74,7 +72,7 @@ test('webhook with invalid signature is rejected', function () {
     ]);
 
     // Invalid signature
-    $sigHeader = 't=' . time() . ',v1=invalid_signature_hash';
+    $sigHeader = 't='.time().',v1=invalid_signature_hash';
 
     $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true), [
         'Stripe-Signature' => $sigHeader,

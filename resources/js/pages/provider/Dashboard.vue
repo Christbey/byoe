@@ -1,16 +1,21 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import type { Booking } from '@/types/marketplace';
+import type { ServiceRequest } from '@/types/marketplace';
+import { Button } from '@/components/ui/button';
+import Badge from '@/components/ui/badge/Badge.vue';
 import Card from '@/components/ui/card/Card.vue';
 import CardHeader from '@/components/ui/card/CardHeader.vue';
 import CardTitle from '@/components/ui/card/CardTitle.vue';
 import CardDescription from '@/components/ui/card/CardDescription.vue';
 import CardContent from '@/components/ui/card/CardContent.vue';
-import { Button } from '@/components/ui/button';
-import Badge from '@/components/ui/badge/Badge.vue';
+import PageHeader from '@/components/ui/page-header/PageHeader.vue';
 import PageHelp from '@/components/marketplace/PageHelp.vue';
+import StatCard from '@/components/marketplace/StatCard.vue';
+import ListItem from '@/components/marketplace/ListItem.vue';
+import EmptyState from '@/components/ui/empty-state/EmptyState.vue';
+import Icon from '@/components/ui/icon/Icon.vue';
 
 interface EarningsStats {
     this_week: number;
@@ -28,7 +33,7 @@ interface ProviderStats {
 interface Props {
     earnings: EarningsStats;
     stats: ProviderStats;
-    upcoming_bookings: Booking[];
+    available_requests: ServiceRequest[];
 }
 
 const props = defineProps<Props>();
@@ -56,10 +61,14 @@ const formatDate = (date: string) => {
 };
 
 const formatTime = (time: string) => {
-    return new Intl.DateTimeFormat('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-    }).format(new Date(time));
+    if (!time) return '';
+
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 </script>
 
@@ -67,239 +76,213 @@ const formatTime = (time: string) => {
     <Head title="Provider Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-            <!-- Header -->
-            <div class="space-y-2">
-                <h1 class="text-2xl font-bold tracking-tight md:text-3xl">
-                    Provider Dashboard
-                </h1>
-                <p class="text-sm text-muted-foreground md:text-base">
-                    Track your earnings and upcoming bookings
-                </p>
-                <PageHelp storage-key="provider-dashboard" :steps="['Browse available service requests from coffee shops in the marketplace.', 'Accept a request to create a booking — show up, do great work, get paid.', 'Your earnings are paid out after the shop marks the booking complete.', 'Keep your profile complete and ratings high to appear more attractive to shops.']" />
-            </div>
+        <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
+            <!-- Page Header -->
+            <PageHeader
+                title="Provider Dashboard"
+                description="Track your earnings, upcoming bookings, and performance metrics"
+            >
+                <template #help>
+                    <PageHelp
+                        storage-key="provider-dashboard"
+                        :steps="[
+                            'Browse available service requests from coffee shops in the marketplace.',
+                            'Accept a request to create a booking — show up, do great work, get paid.',
+                            'Your earnings are paid out after the shop marks the booking complete.',
+                            'Keep your profile complete and ratings high to appear more attractive to shops.',
+                        ]"
+                    />
+                </template>
+            </PageHeader>
 
             <!-- Earnings Summary -->
             <div class="grid gap-4 md:grid-cols-3">
-                <Card>
-                    <CardHeader>
-                        <CardDescription>This Week</CardDescription>
-                        <CardTitle class="text-3xl">
-                            {{ formatCurrency(earnings.this_week) }}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-xs text-muted-foreground">
-                            Earnings from this week
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon="TrendingUp"
+                    label="This Week"
+                    :value="formatCurrency(earnings.this_week)"
+                    subtitle="Earnings from this week"
+                    variant="success"
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardDescription>This Month</CardDescription>
-                        <CardTitle class="text-3xl">
-                            {{ formatCurrency(earnings.this_month) }}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-xs text-muted-foreground">
-                            Earnings from this month
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon="Calendar"
+                    label="This Month"
+                    :value="formatCurrency(earnings.this_month)"
+                    subtitle="Monthly total"
+                    variant="accent"
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardDescription>All Time</CardDescription>
-                        <CardTitle class="text-3xl">
-                            {{ formatCurrency(earnings.all_time) }}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-xs text-muted-foreground">
-                            Total lifetime earnings
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    icon="Wallet"
+                    label="All Time"
+                    :value="formatCurrency(earnings.all_time)"
+                    subtitle="Lifetime earnings"
+                />
             </div>
 
             <!-- Quick Stats -->
-            <div class="grid gap-4 md:grid-cols-4">
-                <Card>
-                    <CardHeader>
-                        <CardDescription>Completed Jobs</CardDescription>
-                        <CardTitle class="text-2xl">
-                            {{ stats.completed_jobs }}
-                        </CardTitle>
-                    </CardHeader>
-                </Card>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                    icon="CheckCircle2"
+                    label="Completed"
+                    :value="stats.completed_jobs"
+                    subtitle="Total jobs"
+                    size="sm"
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardDescription>Average Rating</CardDescription>
-                        <CardTitle class="text-2xl">
-                            {{ Number(stats.average_rating).toFixed(1) }} ⭐
-                        </CardTitle>
-                    </CardHeader>
-                </Card>
+                <StatCard
+                    icon="Star"
+                    label="Rating"
+                    :value="`${Number(stats.average_rating).toFixed(1)} ⭐`"
+                    subtitle="Average rating"
+                    size="sm"
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardDescription>Total Earnings</CardDescription>
-                        <CardTitle class="text-2xl">
-                            {{ formatCurrency(stats.total_earnings) }}
-                        </CardTitle>
-                    </CardHeader>
-                </Card>
+                <StatCard
+                    icon="DollarSign"
+                    label="Earnings"
+                    :value="formatCurrency(stats.total_earnings)"
+                    subtitle="Total earned"
+                    size="sm"
+                />
 
-                <Card>
-                    <CardHeader>
-                        <CardDescription>Pending Invitations</CardDescription>
-                        <CardTitle class="text-2xl">
-                            {{ stats.pending_invitations }}
-                        </CardTitle>
-                    </CardHeader>
-                </Card>
+                <StatCard
+                    icon="Mail"
+                    label="Invitations"
+                    :value="stats.pending_invitations"
+                    subtitle="Pending"
+                    size="sm"
+                    :variant="stats.pending_invitations > 0 ? 'warning' : 'default'"
+                />
             </div>
 
             <!-- Quick Actions -->
-            <div class="flex flex-col gap-3 sm:flex-row">
-                <Button
-                    as="a"
-                    href="/provider/available-requests"
-                    class="w-full sm:w-auto"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        class="size-5 mr-2"
-                    >
-                        <path
-                            d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
-                        />
-                    </svg>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <Button href="/provider/available-requests" class="w-full sm:w-auto">
+                    <Icon name="Search" size="sm" class="mr-2" />
                     View Available Requests
                 </Button>
                 <Button
-                    as="a"
                     href="/provider/bookings"
                     variant="outline"
                     class="w-full sm:w-auto"
                 >
+                    <Icon name="Calendar" size="sm" class="mr-2" />
                     My Bookings
+                </Button>
+                <Button
+                    href="/provider/earnings"
+                    variant="outline"
+                    class="w-full sm:w-auto"
+                >
+                    <Icon name="BarChart3" size="sm" class="mr-2" />
+                    Earnings Detail
                 </Button>
             </div>
 
-            <!-- Upcoming Bookings Calendar View -->
+            <!-- Available Service Requests -->
             <Card>
                 <CardHeader>
-                    <CardTitle>Upcoming Bookings</CardTitle>
-                    <CardDescription>
-                        Your scheduled bookings for the next 7 days
-                    </CardDescription>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                    <div v-if="upcoming_bookings.length > 0" class="space-y-3">
-                        <div
-                            v-for="booking in upcoming_bookings"
-                            :key="booking.id"
-                            class="flex flex-col gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                        >
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-semibold truncate">
-                                        {{
-                                            booking.service_request?.title ||
-                                            'Service'
-                                        }}
-                                    </h3>
-                                    <p class="text-sm text-muted-foreground">
-                                        {{
-                                            formatDate(
-                                                booking.service_request
-                                                    ?.service_date || '',
-                                            )
-                                        }}
-                                        •
-                                        {{
-                                            formatTime(
-                                                booking.service_request
-                                                    ?.start_time || '',
-                                            )
-                                        }}
-                                        -
-                                        {{
-                                            formatTime(
-                                                booking.service_request
-                                                    ?.end_time || '',
-                                            )
-                                        }}
-                                    </p>
-                                </div>
-                                <Badge variant="default">
-                                    {{ booking.status.replace('_', ' ') }}
-                                </Badge>
-                            </div>
-                            <div
-                                v-if="
-                                    booking.service_request?.shop_location
-                                "
-                                class="flex items-start gap-2 text-sm text-muted-foreground"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                    class="size-5 shrink-0"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
-                                <span>
-                                    {{
-                                        booking.service_request.shop_location
-                                            .address_line_1
-                                    }},
-                                    {{
-                                        booking.service_request.shop_location
-                                            .city
-                                    }}
-                                </span>
-                            </div>
-                            <div class="flex items-center justify-between pt-2 border-t">
-                                <p class="text-lg font-bold">
-                                    {{ formatCurrency(booking.provider_payout) }}
-                                </p>
-                                <Button
-                                    as="a"
-                                    :href="`/provider/bookings/${booking.id}`"
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    View Details
-                                </Button>
-                            </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Available Requests</CardTitle>
+                            <CardDescription>
+                                Recent service requests you can accept
+                            </CardDescription>
                         </div>
+                        <Icon name="FileText" class="text-muted-foreground" />
                     </div>
-                    <div
+                </CardHeader>
+                <CardContent class="space-y-3">
+                    <template v-if="available_requests.length > 0">
+                        <ListItem
+                            v-for="request in available_requests"
+                            :key="request.id"
+                            status="success"
+                            clickable
+                            @click="router.visit(`/provider/available-requests`)"
+                        >
+                            <template #header>
+                                <h3 class="font-semibold text-sm">
+                                    {{ request.title }}
+                                </h3>
+                            </template>
+
+                            <template #content>
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Icon name="Calendar" size="xs" />
+                                        <span>{{ formatDate(request.service_date) }}</span>
+                                        <span>•</span>
+                                        <Icon name="Clock" size="xs" />
+                                        <span>
+                                            {{ formatTime(request.start_time) }}
+                                            -
+                                            {{ formatTime(request.end_time) }}
+                                        </span>
+                                    </div>
+                                    <div
+                                        v-if="request.shop_location"
+                                        class="flex items-center gap-1.5 text-xs text-muted-foreground"
+                                    >
+                                        <Icon name="Store" size="xs" />
+                                        <span>{{ request.shop_location.shop?.name }}</span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template #footer>
+                                <div
+                                    v-if="request.shop_location"
+                                    class="flex items-center gap-1.5 text-xs text-muted-foreground"
+                                >
+                                    <Icon name="MapPin" size="xs" />
+                                    <span>
+                                        {{ request.shop_location.city }},
+                                        {{ request.shop_location.state }}
+                                    </span>
+                                </div>
+                            </template>
+
+                            <template #badge>
+                                <div class="flex flex-col items-end gap-1">
+                                    <span class="text-lg font-bold text-primary">
+                                        {{ formatCurrency(request.price) }}
+                                    </span>
+                                </div>
+                            </template>
+
+                            <template #action>
+                                <Button variant="ghost" size="sm">
+                                    <span class="sr-only">View details</span>
+                                    <Icon name="ChevronRight" size="sm" />
+                                </Button>
+                            </template>
+                        </ListItem>
+                    </template>
+
+                    <!-- Empty State -->
+                    <EmptyState
                         v-else
-                        class="text-center py-8 text-sm text-muted-foreground"
-                    >
-                        No upcoming bookings
+                        icon="FileX"
+                        title="No available requests"
+                        description="There are no open service requests in your area right now. Check back later or adjust your service area."
+                        action-label="View All Requests"
+                        action-href="/provider/available-requests"
+                    />
+
+                    <!-- View All Button -->
+                    <div v-if="available_requests.length > 0" class="pt-3 border-t">
+                        <Button
+                            href="/provider/available-requests"
+                            variant="outline"
+                            class="w-full"
+                        >
+                            View All Requests
+                            <Icon name="ArrowRight" size="sm" class="ml-2" />
+                        </Button>
                     </div>
-                    <Button
-                        as="a"
-                        href="/provider/bookings"
-                        variant="outline"
-                        class="w-full"
-                    >
-                        View All Bookings
-                    </Button>
                 </CardContent>
             </Card>
         </div>
