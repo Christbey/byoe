@@ -20,7 +20,8 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "spatie/laravel-permission": "^7.1",
-        "stripe/stripe-php": "^19.3"
+        "stripe/stripe-php": "^19.3",
+        "symfony/sendgrid-mailer": "^7.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
