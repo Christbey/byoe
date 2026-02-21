@@ -91,6 +91,8 @@ class ProfileController extends Controller
         $validated = $request->validated();
         $provider = $request->user()->provider;
 
+        $isNewProvider = ! $provider;
+
         if (! $provider) {
             Provider::create([
                 'user_id' => $request->user()->id,
@@ -98,16 +100,18 @@ class ProfileController extends Controller
                 'bio' => $validated['bio'] ?? null,
                 'skills' => $validated['skills'] ?? [],
                 'years_experience' => $validated['years_experience'] ?? 0,
-                'is_active' => true,
+                'is_active' => $validated['is_active'] ?? true,
+                'service_area_max_miles' => $validated['service_area_max_miles'] ?? 25,
+                'preferred_zip_codes' => $validated['preferred_zip_codes'] ?? [],
             ]);
 
-            return redirect()->route('provider.profile')
-                ->with('success', 'Provider profile created successfully!');
+            return redirect()->route('settings.provider')
+                ->with('success', 'Welcome! Your provider profile has been created. Set your availability to start accepting jobs.');
         }
 
         $provider->update($validated);
 
-        return redirect()->route('provider.profile')
+        return redirect()->route('settings.provider')
             ->with('success', 'Profile updated successfully!');
     }
 }

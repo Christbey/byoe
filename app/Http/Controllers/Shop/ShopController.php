@@ -56,6 +56,8 @@ class ShopController extends Controller
 
         $validated = $request->validated();
 
+        $isNewShop = ! $shop;
+
         if (! $shop) {
             $shop = $request->user()->shop()->create([
                 ...$validated,
@@ -63,6 +65,12 @@ class ShopController extends Controller
             ]);
         } else {
             $shop->update($validated);
+        }
+
+        // For new shops, guide them to add their first location
+        if ($isNewShop) {
+            return redirect()->route('shop.locations.create')
+                ->with('success', 'Shop profile created! Now add your first location.');
         }
 
         return redirect()->route('shop.profile')
