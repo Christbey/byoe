@@ -309,8 +309,8 @@ const setupStripe = () => {
                         </p>
                     </div>
 
-                    <!-- Service Area -->
-                    <div class="border-t pt-6 space-y-4">
+                    <!-- Service Area - Hidden for now, can be set in settings later -->
+                    <!-- <div class="border-t pt-6 space-y-4">
                         <h3 class="text-sm font-semibold">Service Area (Optional)</h3>
 
                         <div class="space-y-2">
@@ -356,7 +356,7 @@ const setupStripe = () => {
                                 </Badge>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </CardContent>
 
                 <CardFooter class="bg-muted/30">
