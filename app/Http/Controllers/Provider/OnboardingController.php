@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
+use App\Models\Industry;
 use App\Models\IndustrySkill;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,14 +25,19 @@ class OnboardingController extends Controller
                 ->with('info', 'Your provider profile is already set up.');
         }
 
-        $availableSkills = IndustrySkill::orderBy('name')
-            ->pluck('name')
-            ->unique()
-            ->values()
-            ->toArray();
+        $industries = Industry::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name']);
+
+        $industrySkills = IndustrySkill::with('industry:id,name')
+            ->orderBy('sort_order')
+            ->get()
+            ->groupBy('industry_id')
+            ->map(fn ($skills) => $skills->pluck('name')->values());
 
         return Inertia::render('provider/Onboarding', [
-            'availableSkills' => $availableSkills,
+            'industries' => $industries,
+            'industrySkills' => $industrySkills,
         ]);
     }
 }

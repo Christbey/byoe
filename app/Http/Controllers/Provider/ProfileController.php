@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\UpsertProviderProfileRequest;
+use App\Models\Industry;
 use App\Models\IndustrySkill;
 use App\Models\Provider;
 use App\Models\Rating;
@@ -65,15 +66,20 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        $availableSkills = IndustrySkill::orderBy('name')
-            ->pluck('name')
-            ->unique()
-            ->values()
-            ->toArray();
+        $industries = Industry::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name']);
+
+        $industrySkills = IndustrySkill::with('industry:id,name')
+            ->orderBy('sort_order')
+            ->get()
+            ->groupBy('industry_id')
+            ->map(fn ($skills) => $skills->pluck('name')->values());
 
         return Inertia::render('provider/EditProfile', [
             'provider' => $request->user()->provider,
-            'availableSkills' => $availableSkills,
+            'industries' => $industries,
+            'industrySkills' => $industrySkills,
         ]);
     }
 
@@ -88,6 +94,7 @@ class ProfileController extends Controller
         if (! $provider) {
             Provider::create([
                 'user_id' => $request->user()->id,
+                'industry_id' => $validated['industry_id'],
                 'bio' => $validated['bio'] ?? null,
                 'skills' => $validated['skills'] ?? [],
                 'years_experience' => $validated['years_experience'] ?? 0,

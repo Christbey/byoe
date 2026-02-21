@@ -14,6 +14,7 @@ class UpsertProviderProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'industry_id' => ['required', 'exists:industries,id'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'skills' => ['nullable', 'array'],
             'years_experience' => ['nullable', 'integer', 'min:0', 'max:50'],

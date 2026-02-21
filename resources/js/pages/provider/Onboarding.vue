@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -16,8 +16,14 @@ import Badge from '@/components/ui/badge/Badge.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import Icon from '@/components/ui/icon/Icon.vue';
 
+interface Industry {
+    id: number;
+    name: string;
+}
+
 interface Props {
-    availableSkills: string[];
+    industries: Industry[];
+    industrySkills: Record<number, string[]>;
 }
 
 const props = defineProps<Props>();
@@ -30,12 +36,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const form = useForm({
+    industry_id: null as number | null,
     bio: '',
-    skills: [],
+    skills: [] as string[],
     years_experience: 0,
     is_active: true,
     service_area_max_miles: 25,
-    preferred_zip_codes: [],
+    preferred_zip_codes: [] as string[],
+});
+
+const availableSkills = computed(() => {
+    if (!form.industry_id) return [];
+    return props.industrySkills[form.industry_id] || [];
 });
 
 const zipInput = ref('');
@@ -145,6 +157,31 @@ const handleSubmit = () => {
                     </CardHeader>
 
                     <CardContent class="space-y-6">
+                        <!-- Industry Selection -->
+                        <div class="space-y-2">
+                            <Label for="industry_id">Industry <span class="text-destructive">*</span></Label>
+                            <select
+                                id="industry_id"
+                                v-model="form.industry_id"
+                                required
+                                class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            >
+                                <option :value="null" disabled>Select your industry...</option>
+                                <option v-for="industry in industries" :key="industry.id" :value="industry.id">
+                                    {{ industry.name }}
+                                </option>
+                            </select>
+                            <p class="text-xs text-muted-foreground">
+                                Choose the industry you work in - this will determine your available skills
+                            </p>
+                            <p
+                                v-if="form.errors.industry_id"
+                                class="text-sm text-destructive"
+                            >
+                                {{ form.errors.industry_id }}
+                            </p>
+                        </div>
+
                         <!-- Bio -->
                         <div class="space-y-2">
                             <Label for="bio">Professional Bio</Label>
@@ -197,9 +234,16 @@ const handleSubmit = () => {
                                 </p>
                             </div>
 
+                            <!-- No Industry Selected Message -->
+                            <div v-if="!form.industry_id" class="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
+                                <p class="text-sm text-muted-foreground">
+                                    Please select an industry above to see available skills
+                                </p>
+                            </div>
+
                             <!-- Quick Add Common Skills -->
-                            <div class="space-y-2">
-                                <p class="text-sm font-medium">Common Skills</p>
+                            <div v-else class="space-y-2">
+                                <p class="text-sm font-medium">Common Skills for {{ industries.find(i => i.id === form.industry_id)?.name }}</p>
                                 <div class="flex flex-wrap gap-2">
                                     <Badge
                                         v-for="skill in availableSkills.filter(
