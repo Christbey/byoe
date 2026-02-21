@@ -27,25 +27,33 @@ class SendTestEmail extends Command
     {
         $email = $this->argument('email') ?? 'info@shiftfinder.app';
 
-        $this->info('Sending test email to: ' . $email);
+        $this->info('Sending test email to: '.$email);
 
         try {
-            \Illuminate\Support\Facades\Mail::raw(
-                'This is a test email from ShiftFinder sent via SendGrid at ' . now()->toDateTimeString(),
-                function (\Illuminate\Mail\Message $message) use ($email) {
-                    $message->to($email)
-                        ->from(config('mail.from.address'), config('mail.from.name'))
-                        ->subject('SendGrid Test Email - ' . now()->format('Y-m-d H:i:s'));
-                }
+            $mail = new \SendGrid\Mail\Mail;
+            $mail->setFrom(config('mail.from.address'), config('mail.from.name'));
+            $mail->setSubject('SendGrid Test Email - '.now()->format('Y-m-d H:i:s'));
+            $mail->addTo($email);
+            $mail->addContent(
+                'text/plain',
+                'This is a test email from ShiftFinder sent via SendGrid at '.now()->toDateTimeString()
+            );
+            $mail->addContent(
+                'text/html',
+                '<p>This is a test email from <strong>ShiftFinder</strong> sent via SendGrid at '.now()->toDateTimeString().'</p>'
             );
 
+            $sendgrid = new \SendGrid(env('SENDGRID_API_KEY'));
+            $response = $sendgrid->send($mail);
+
             $this->info('✅ Email sent successfully via SendGrid!');
+            $this->line('Response Code: '.$response->statusCode());
             $this->newLine();
-            $this->line('Check your inbox at: ' . $email);
+            $this->line('Check your inbox at: '.$email);
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('❌ Failed to send email: ' . $e->getMessage());
+            $this->error('❌ Failed to send email: '.$e->getMessage());
             $this->newLine();
             $this->line('Stack trace:');
             $this->line($e->getTraceAsString());
