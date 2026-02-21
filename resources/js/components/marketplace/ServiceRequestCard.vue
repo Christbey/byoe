@@ -21,7 +21,9 @@ interface Props {
 const props = defineProps<Props>();
 
 const formattedDate = computed(() => {
-    const date = new Date(props.serviceRequest.service_date);
+    // Parse as local date to avoid timezone issues
+    const [year, month, day] = props.serviceRequest.service_date.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
@@ -29,10 +31,18 @@ const formattedDate = computed(() => {
     });
 });
 
+const formatTime = (time: string) => {
+    if (!time) return '';
+    // Handle plain time strings like "08:00:00" or "08:00"
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
+
 const formattedTime = computed(() => {
-    const opts: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
-    const start = new Date(props.serviceRequest.start_time).toLocaleTimeString('en-US', opts);
-    const end = new Date(props.serviceRequest.end_time).toLocaleTimeString('en-US', opts);
+    const start = formatTime(props.serviceRequest.start_time);
+    const end = formatTime(props.serviceRequest.end_time);
     return `${start} - ${end}`;
 });
 

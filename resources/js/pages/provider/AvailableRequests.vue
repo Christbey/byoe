@@ -109,8 +109,12 @@ const hasMorePages = computed(() => props.requests.current_page < props.requests
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-const formatDate = (date: string) =>
-    new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(date));
+const formatDate = (date: string) => {
+    // Parse as local date to avoid timezone issues
+    const [year, month, day] = date.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(localDate);
+};
 
 const formatTime = (time: string) => {
     if (!time) return '';
