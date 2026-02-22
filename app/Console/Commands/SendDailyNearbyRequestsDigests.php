@@ -16,7 +16,9 @@ class SendDailyNearbyRequestsDigests extends Command
      *
      * @var string
      */
-    protected $signature = 'emails:send-daily-digests';
+    protected $signature = 'emails:send-daily-digests
+                            {--user= : Send to a specific user ID for testing}
+                            {--test : Send test emails immediately without queueing}';
 
     /**
      * The console command description.
@@ -32,15 +34,21 @@ class SendDailyNearbyRequestsDigests extends Command
     {
         $this->info('Sending daily nearby requests digests...');
 
-        $providers = Provider::where('is_active', true)
-            ->with('user')
-            ->get();
+        $query = Provider::where('is_active', true)->with('user');
+
+        // Filter by specific user if testing
+        if ($userId = $this->option('user')) {
+            $query->whereHas('user', fn ($q) => $q->where('id', $userId));
+        }
+
+        $providers = $query->get();
 
         $sent = 0;
+        $isTest = $this->option('test');
 
         foreach ($providers as $provider) {
-            // Skip if user has opted out of daily digests
-            if (! $provider->user->wantsEmail('daily_digest')) {
+            // Skip if user has opted out of daily digests (unless testing)
+            if (! $isTest && ! $provider->user->wantsEmail('daily_digest')) {
                 continue;
             }
 
@@ -48,10 +56,17 @@ class SendDailyNearbyRequestsDigests extends Command
             $requests = $this->getNearbyRequests($provider, $geocodingService);
 
             // Only send if there are requests OR if it's been configured to send even with no results
-            if ($requests->count() > 0 || config('mail.daily_digest_send_empty', false)) {
-                Mail::to($provider->user->email)->queue(
-                    new DailyNearbyRequestsDigest($provider, $requests)
-                );
+            if ($requests->count() > 0 || config('mail.daily_digest_send_empty', false) || $isTest) {
+                if ($isTest) {
+                    Mail::to($provider->user->email)->send(
+                        new DailyNearbyRequestsDigest($provider, $requests)
+                    );
+                    $this->info("Test email sent to {$provider->user->email}");
+                } else {
+                    Mail::to($provider->user->email)->queue(
+                        new DailyNearbyRequestsDigest($provider, $requests)
+                    );
+                }
                 $sent++;
             }
         }

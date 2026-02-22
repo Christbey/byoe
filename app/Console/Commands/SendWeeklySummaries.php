@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Mail;
 
 class SendWeeklySummaries extends Command
 {
-    protected $signature = 'emails:send-weekly-summaries';
+    protected $signature = 'emails:send-weekly-summaries
+                            {--user= : Send to a specific user ID for testing}
+                            {--test : Send test emails immediately without queueing}';
 
     protected $description = 'Send weekly summaries to providers and shops';
 
@@ -25,8 +27,16 @@ class SendWeeklySummaries extends Command
 
     private function sendProviderSummaries()
     {
-        $providers = Provider::where('is_active', true)->with('user')->get();
+        $query = Provider::where('is_active', true)->with('user');
+
+        // Filter by specific user if testing
+        if ($userId = $this->option('user')) {
+            $query->whereHas('user', fn ($q) => $q->where('id', $userId));
+        }
+
+        $providers = $query->get();
         $sent = 0;
+        $isTest = $this->option('test');
 
         foreach ($providers as $provider) {
             $weeklyEarnings = $provider->payouts()
@@ -41,10 +51,18 @@ class SendWeeklySummaries extends Command
 
             $averageRating = $provider->total_ratings > 0 ? $provider->average_rating : 0;
 
-            if (($completedBookings > 0 || $weeklyEarnings > 0) && $provider->user->wantsEmail('weekly_summary')) {
-                Mail::to($provider->user->email)->queue(
-                    new WeeklyEarningsSummary($provider, $weeklyEarnings, $completedBookings, $averageRating)
-                );
+            // Send if there's activity OR if testing (ignore preferences in test mode)
+            if (($completedBookings > 0 || $weeklyEarnings > 0 || $isTest) && ($isTest || $provider->user->wantsEmail('weekly_summary'))) {
+                if ($isTest) {
+                    Mail::to($provider->user->email)->send(
+                        new WeeklyEarningsSummary($provider, $weeklyEarnings, $completedBookings, $averageRating)
+                    );
+                    $this->info("Test email sent to {$provider->user->email}");
+                } else {
+                    Mail::to($provider->user->email)->queue(
+                        new WeeklyEarningsSummary($provider, $weeklyEarnings, $completedBookings, $averageRating)
+                    );
+                }
                 $sent++;
             }
         }
@@ -54,8 +72,16 @@ class SendWeeklySummaries extends Command
 
     private function sendShopSummaries()
     {
-        $shops = Shop::where('status', 'active')->with('user')->get();
+        $query = Shop::where('status', 'active')->with('user');
+
+        // Filter by specific user if testing
+        if ($userId = $this->option('user')) {
+            $query->whereHas('user', fn ($q) => $q->where('id', $userId));
+        }
+
+        $shops = $query->get();
         $sent = 0;
+        $isTest = $this->option('test');
 
         foreach ($shops as $shop) {
             $upcomingBookings = $shop->bookings()
@@ -72,10 +98,18 @@ class SendWeeklySummaries extends Command
 
             $totalSpent = $completedBookings->sum(fn ($b) => $b->serviceRequest->price);
 
-            if (($upcomingBookings->count() > 0 || $completedBookings->count() > 0) && $shop->user->wantsEmail('weekly_summary')) {
-                Mail::to($shop->user->email)->queue(
-                    new WeeklyBookingSummary($shop, $upcomingBookings, $completedBookings, $totalSpent)
-                );
+            // Send if there's activity OR if testing (ignore preferences in test mode)
+            if (($upcomingBookings->count() > 0 || $completedBookings->count() > 0 || $isTest) && ($isTest || $shop->user->wantsEmail('weekly_summary'))) {
+                if ($isTest) {
+                    Mail::to($shop->user->email)->send(
+                        new WeeklyBookingSummary($shop, $upcomingBookings, $completedBookings, $totalSpent)
+                    );
+                    $this->info("Test email sent to {$shop->user->email}");
+                } else {
+                    Mail::to($shop->user->email)->queue(
+                        new WeeklyBookingSummary($shop, $upcomingBookings, $completedBookings, $totalSpent)
+                    );
+                }
                 $sent++;
             }
         }
