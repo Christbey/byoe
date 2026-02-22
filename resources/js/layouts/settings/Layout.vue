@@ -60,6 +60,10 @@ const sidebarNavItems = computed<NavItem[]>(() => {
         {
             title: 'Appearance',
             href: editAppearance(),
+        },
+        {
+            title: 'Support',
+            href: '/settings/support',
         }
     );
 
