@@ -30,7 +30,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Public Stripe webhook endpoint (no authentication required)
-Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
+// Rate limited to 100 requests per minute to prevent abuse
+Route::post('/stripe/webhook', StripeWebhookController::class)
+    ->middleware('throttle:100,1')
+    ->name('stripe.webhook');
 
 // ============================================================================
 // API V1 Routes - Token-based authentication (Sanctum) for mobile apps

@@ -66,23 +66,10 @@ class PaymentController extends Controller
             $stripePublishableKey = config('stripe.publishable_key');
 
             if ($shop->stripe_payment_method_id) {
-                try {
-                    \Stripe\Stripe::setApiKey(config('stripe.secret_key'));
-                    $pm = \Stripe\PaymentMethod::retrieve($shop->stripe_payment_method_id);
+                $savedCard = $this->stripeService->getPaymentMethodDetails($shop->stripe_payment_method_id);
 
-                    if ($pm->card) {
-                        $savedCard = [
-                            'brand' => $pm->card->brand,
-                            'last4' => $pm->card->last4,
-                            'exp_month' => $pm->card->exp_month,
-                            'exp_year' => $pm->card->exp_year,
-                        ];
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Failed to retrieve saved payment method for shop', [
-                        'shop_id' => $shop->id,
-                        'error' => $e->getMessage(),
-                    ]);
+                // Clear stale reference if Stripe no longer has the payment method
+                if ($savedCard === null) {
                     $shop->update(['stripe_payment_method_id' => null]);
                 }
             }

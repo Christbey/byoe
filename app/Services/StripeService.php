@@ -588,6 +588,40 @@ class StripeService
         ];
     }
 
+    /**
+     * Retrieve payment method details from Stripe.
+     *
+     * Returns card information (brand, last4, expiry) for a saved payment method.
+     * Returns null if the payment method is not found or doesn't have card data.
+     *
+     * @param  string  $paymentMethodId  The Stripe PaymentMethod ID
+     * @return array|null Card details or null
+     */
+    public function getPaymentMethodDetails(string $paymentMethodId): ?array
+    {
+        try {
+            $paymentMethod = \Stripe\PaymentMethod::retrieve($paymentMethodId);
+
+            if (! $paymentMethod->card) {
+                return null;
+            }
+
+            return [
+                'brand' => $paymentMethod->card->brand,
+                'last4' => $paymentMethod->card->last4,
+                'exp_month' => $paymentMethod->card->exp_month,
+                'exp_year' => $paymentMethod->card->exp_year,
+            ];
+        } catch (ApiErrorException $e) {
+            Log::warning('Failed to retrieve payment method details', [
+                'payment_method_id' => $paymentMethodId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     public function paymentIntentRequiresCapture(\App\Models\ServiceRequest $serviceRequest): bool
     {
         if (! $serviceRequest->stripe_payment_intent_id) {
