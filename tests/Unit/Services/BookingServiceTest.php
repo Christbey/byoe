@@ -2,6 +2,7 @@
 
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Payout;
 use App\Models\Provider;
 use App\Models\ServiceRequest;
 use App\Models\Shop;
@@ -95,6 +96,12 @@ test('acceptServiceRequest creates booking', function () {
         'status' => 'confirmed',
     ]);
 
+    $this->assertDatabaseHas('payouts', [
+        'booking_id' => $booking->id,
+        'provider_id' => $provider->id,
+        'status' => 'scheduled',
+    ]);
+
     $serviceRequest->refresh();
     expect($serviceRequest->status)->toBe('filled');
 });
@@ -123,6 +130,73 @@ test('acceptServiceRequest skips payment capture for legacy requests without pay
     $booking = $bookingService->acceptServiceRequest($serviceRequest, $provider);
 
     expect($booking->status)->toBe('confirmed');
+});
+
+test('acceptServiceRequest schedules payout when payment is captured', function () {
+    Config::set('marketplace.platform_fee_percentage', 15.0);
+    Config::set('marketplace.payout.auto_payout_delay_days', 5);
+    Config::set('stripe.payment.currency', 'usd');
+
+    $user = User::factory()->create();
+    $provider = Provider::factory()->create(['user_id' => $user->id]);
+
+    $shopOwner = User::factory()->create();
+    $shop = Shop::factory()->create(['user_id' => $shopOwner->id]);
+    $location = ShopLocation::factory()->create(['shop_id' => $shop->id]);
+
+    $serviceRequest = ServiceRequest::factory()->create([
+        'shop_location_id' => $location->id,
+        'status' => 'open',
+        'price' => 200.00,
+        'stripe_payment_intent_id' => 'pi_test456',
+    ]);
+
+    $stripeService = \Mockery::mock(StripeService::class);
+    $stripeService->shouldReceive('captureServiceRequestPayment')
+        ->once()
+        ->andReturn(new Payment);
+    $bookingService = new BookingService($stripeService);
+
+    $booking = $bookingService->acceptServiceRequest($serviceRequest, $provider);
+
+    $payout = Payout::where('booking_id', $booking->id)->first();
+
+    expect($payout)->not->toBeNull()
+        ->and($payout->provider_id)->toBe($provider->id)
+        ->and($payout->amount)->toBe(170.0) // 200 - 15% = 170
+        ->and($payout->currency)->toBe('usd')
+        ->and($payout->status)->toBe('scheduled')
+        ->and($payout->scheduled_for->toDateString())->toBe(now()->addDays(5)->toDateString());
+});
+
+test('acceptServiceRequest does not create payout for legacy requests without payment', function () {
+    Config::set('marketplace.platform_fee_percentage', 15.0);
+
+    $user = User::factory()->create();
+    $provider = Provider::factory()->create(['user_id' => $user->id]);
+
+    $shopOwner = User::factory()->create();
+    $shop = Shop::factory()->create(['user_id' => $shopOwner->id]);
+    $location = ShopLocation::factory()->create(['shop_id' => $shop->id]);
+
+    $serviceRequest = ServiceRequest::factory()->create([
+        'shop_location_id' => $location->id,
+        'status' => 'open',
+        'price' => 100.00,
+        'stripe_payment_intent_id' => null,
+    ]);
+
+    $stripeService = \Mockery::mock(StripeService::class);
+    $stripeService->shouldNotReceive('captureServiceRequestPayment');
+    $bookingService = new BookingService($stripeService);
+
+    $booking = $bookingService->acceptServiceRequest($serviceRequest, $provider);
+
+    expect($booking->status)->toBe('confirmed');
+
+    $this->assertDatabaseMissing('payouts', [
+        'booking_id' => $booking->id,
+    ]);
 });
 
 test('acceptServiceRequest throws exception for non-open request', function () {

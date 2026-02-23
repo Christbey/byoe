@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Mail\Booking\BookingConfirmation;
+use App\Mail\Payout\PayoutNotification;
 use App\Mail\Rating\RatingReminder;
 use App\Models\Booking;
+use App\Models\Payout;
 use App\Models\Provider;
 use App\Models\ServiceRequest;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -76,6 +78,19 @@ class BookingService
             // they skip capture and are confirmed directly.
             if ($lockedRequest->stripe_payment_intent_id) {
                 $this->stripeService->captureServiceRequestPayment($lockedRequest, $booking);
+
+                // Schedule payout to provider inside the transaction so the webhook
+                // race condition (payment_intent.succeeded firing before commit) can
+                // never result in a missing Payout record.
+                $holdDays = config('marketplace.payout.auto_payout_delay_days', 3);
+                $payout = Payout::create([
+                    'booking_id' => $booking->id,
+                    'provider_id' => $provider->id,
+                    'amount' => $fees['provider_payout'],
+                    'currency' => config('stripe.payment.currency', 'usd'),
+                    'status' => 'scheduled',
+                    'scheduled_for' => now()->addDays($holdDays),
+                ]);
             }
 
             $booking->update(['status' => 'confirmed']);
@@ -97,6 +112,10 @@ class BookingService
             $shopUser = $booking->serviceRequest->shopLocation->shop->user;
             Mail::to($providerUser)->queue(new BookingConfirmation($booking, $providerUser));
             Mail::to($shopUser)->queue(new BookingConfirmation($booking, $shopUser));
+
+            if (isset($payout)) {
+                Mail::to($providerUser)->queue(new PayoutNotification($payout));
+            }
 
             return $booking;
         } catch (UniqueConstraintViolationException) {
