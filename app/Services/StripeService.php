@@ -243,7 +243,20 @@ class StripeService
     public function createOrRetrieveShopCustomer(Shop $shop): string
     {
         if ($shop->stripe_customer_id) {
-            return $shop->stripe_customer_id;
+            // Verify customer still exists in Stripe
+            try {
+                \Stripe\Customer::retrieve($shop->stripe_customer_id);
+
+                return $shop->stripe_customer_id;
+            } catch (ApiErrorException $e) {
+                // Customer doesn't exist, clear it and create new one
+                Log::warning('Shop customer deleted from Stripe, recreating', [
+                    'shop_id' => $shop->id,
+                    'old_customer_id' => $shop->stripe_customer_id,
+                    'error' => $e->getMessage(),
+                ]);
+                $shop->update(['stripe_customer_id' => null]);
+            }
         }
 
         try {
