@@ -72,13 +72,36 @@ const trustSignals = [
     'Shops see ratings and cleaner booking status so they know what is actually confirmed.',
     'If something goes wrong, disputes can be opened directly from the booking and reviewed by ops.',
 ];
+
+const mobileStoryCards = [
+    {
+        eyebrow: 'What it is',
+        title: 'Post shifts. Accept shifts. Track the whole booking.',
+        body: 'This is a focused staffing marketplace for shift coverage, not a general hiring feed.',
+    },
+    {
+        eyebrow: 'For shops',
+        title: 'Create a shift and get coverage fast.',
+        body: 'You post the time, rate, and location. The platform handles the booking flow and payment visibility.',
+    },
+    {
+        eyebrow: 'For providers',
+        title: 'Accept real work with payouts and trust built in.',
+        body: 'Providers see available shifts, manage bookings, and build reputation through ratings and reliability.',
+    },
+    {
+        eyebrow: 'Trust layer',
+        title: 'Verification, disputes, and status are part of the product.',
+        body: 'Users should not have to guess what is confirmed, review-ready, or under investigation.',
+    },
+];
 </script>
 
 <template>
     <Head title="ShiftFinder" />
 
-    <div class="min-h-screen pt-safe pb-safe text-foreground md:px-6 md:py-6">
-        <div class="mx-auto flex min-h-screen max-w-7xl flex-col overflow-hidden border-white/45 bg-white/52 backdrop-blur-2xl dark:border-white/8 dark:bg-slate-950/38 md:min-h-[calc(100vh-3rem)] md:rounded-[36px] md:border md:shadow-[0_28px_80px_-42px_rgba(15,23,42,0.36)]">
+    <div class="min-h-[100svh] pt-safe pb-safe pl-safe pr-safe text-foreground md:px-6 md:py-6">
+        <div class="mx-auto flex min-h-[100svh] max-w-7xl flex-col overflow-hidden border-white/45 bg-white/52 backdrop-blur-2xl dark:border-white/8 dark:bg-slate-950/38 md:min-h-[calc(100vh-3rem)] md:rounded-[36px] md:border md:shadow-[0_28px_80px_-42px_rgba(15,23,42,0.36)]">
             <header class="border-b border-white/45 px-4 py-4 dark:border-white/8 md:px-8 md:py-5">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-3">
@@ -128,11 +151,11 @@ const trustSignals = [
 
                     <div class="relative grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
                         <div class="space-y-6">
-                            <div class="flex flex-wrap gap-2">
+                            <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
                                 <span
                                     v-for="pill in featurePills"
                                     :key="pill"
-                                    class="rounded-full border border-white/55 bg-white/72 px-3 py-1 text-xs font-medium text-muted-foreground shadow-[0_8px_20px_-18px_rgba(15,23,42,0.35)] backdrop-blur-md dark:border-white/10 dark:bg-white/8"
+                                    class="shrink-0 rounded-full border border-white/55 bg-white/72 px-3 py-1 text-xs font-medium text-muted-foreground shadow-[0_8px_20px_-18px_rgba(15,23,42,0.35)] backdrop-blur-md dark:border-white/10 dark:bg-white/8"
                                 >
                                     {{ pill }}
                                 </span>
@@ -151,13 +174,13 @@ const trustSignals = [
                                 <template v-if="canRegister && !$page.props.auth.user">
                                     <Link
                                         href="/register?role=shop_owner"
-                                        class="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[0_14px_32px_-16px_rgba(14,110,255,0.7)] transition hover:bg-primary/92"
+                                        class="inline-flex min-h-[3.25rem] h-[3.25rem] items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[0_14px_32px_-16px_rgba(14,110,255,0.7)] transition hover:bg-primary/92"
                                     >
                                         I need staff
                                     </Link>
                                     <Link
                                         href="/register?role=provider"
-                                        class="inline-flex h-12 items-center justify-center rounded-full border border-white/55 bg-white/78 px-6 text-sm font-medium shadow-[0_10px_28px_-20px_rgba(15,23,42,0.32)] backdrop-blur-md transition hover:bg-white/92 dark:border-white/10 dark:bg-white/8 dark:hover:bg-white/12"
+                                        class="inline-flex min-h-[3.25rem] h-[3.25rem] items-center justify-center rounded-full border border-white/55 bg-white/78 px-6 text-sm font-medium shadow-[0_10px_28px_-20px_rgba(15,23,42,0.32)] backdrop-blur-md transition hover:bg-white/92 dark:border-white/10 dark:bg-white/8 dark:hover:bg-white/12"
                                     >
                                         I want to work
                                     </Link>
@@ -165,7 +188,7 @@ const trustSignals = [
                                 <Link
                                     v-else-if="$page.props.auth.user"
                                     :href="dashboard()"
-                                    class="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[0_14px_32px_-16px_rgba(14,110,255,0.7)] transition hover:bg-primary/92"
+                                    class="inline-flex min-h-[3.25rem] h-[3.25rem] items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[0_14px_32px_-16px_rgba(14,110,255,0.7)] transition hover:bg-primary/92"
                                 >
                                     Continue to dashboard
                                 </Link>
@@ -244,7 +267,27 @@ const trustSignals = [
                     </div>
                 </section>
 
-                <section class="grid gap-4 border-t border-white/45 px-4 py-8 dark:border-white/8 md:px-8 lg:grid-cols-3">
+                <section class="border-t border-white/45 px-4 py-6 dark:border-white/8 md:hidden">
+                    <div class="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <article
+                            v-for="card in mobileStoryCards"
+                            :key="card.title"
+                            class="ios-panel min-w-[84%] snap-center p-5"
+                        >
+                            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                {{ card.eyebrow }}
+                            </p>
+                            <h3 class="mt-3 text-xl font-semibold tracking-[-0.04em]">
+                                {{ card.title }}
+                            </h3>
+                            <p class="mt-3 text-sm leading-6 text-muted-foreground">
+                                {{ card.body }}
+                            </p>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="hidden gap-4 border-t border-white/45 px-4 py-8 dark:border-white/8 md:grid md:px-8 lg:grid-cols-3">
                     <div
                         v-for="card in conceptCards"
                         :key="card.title"
@@ -262,7 +305,7 @@ const trustSignals = [
                     </div>
                 </section>
 
-                <section class="grid gap-4 border-t border-white/45 px-4 py-8 dark:border-white/8 md:px-8 lg:grid-cols-2">
+                <section class="hidden gap-4 border-t border-white/45 px-4 py-8 dark:border-white/8 md:grid md:px-8 lg:grid-cols-2">
                     <div class="ios-panel p-6">
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                             For businesses
@@ -310,7 +353,75 @@ const trustSignals = [
                     </div>
                 </section>
 
-                <section class="grid gap-4 border-t border-white/45 px-4 py-8 dark:border-white/8 md:px-8 lg:grid-cols-[0.9fr_1.1fr]">
+                <section class="border-t border-white/45 px-4 py-6 dark:border-white/8 md:hidden">
+                    <div class="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <article class="ios-panel min-w-[84%] snap-center p-5">
+                            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                First steps
+                            </p>
+                            <div class="mt-4 space-y-3">
+                                <div
+                                    v-for="(step, index) in onboardingExplainer"
+                                    :key="step"
+                                    class="flex items-start gap-3"
+                                >
+                                    <span class="flex size-7 items-center justify-center rounded-full bg-primary/12 text-xs font-semibold text-primary">
+                                        {{ index + 1 }}
+                                    </span>
+                                    <p class="pt-0.5 text-sm leading-6 text-muted-foreground">
+                                        {{ step }}
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="ios-panel min-w-[84%] snap-center p-5">
+                            <div class="flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                        Booking flow
+                                    </p>
+                                    <h3 class="mt-2 text-xl font-semibold tracking-[-0.04em]">
+                                        One readable lifecycle.
+                                    </h3>
+                                </div>
+                                <span class="rounded-full border border-white/55 bg-white/76 px-3 py-1 text-[0.65rem] font-semibold text-muted-foreground dark:border-white/10 dark:bg-white/8">
+                                    MVP
+                                </span>
+                            </div>
+                            <div class="mt-4 space-y-3">
+                                <div
+                                    v-for="step in lifecycleSteps"
+                                    :key="step.title"
+                                    class="rounded-[20px] border border-white/50 bg-white/62 p-3.5 backdrop-blur-md dark:border-white/8 dark:bg-white/6"
+                                >
+                                    <p class="text-sm font-semibold">{{ step.title }}</p>
+                                    <p class="mt-1 text-sm text-muted-foreground">{{ step.detail }}</p>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="ios-surface min-w-[84%] snap-center p-5">
+                            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                Trust and safety
+                            </p>
+                            <h3 class="mt-3 text-xl font-semibold tracking-[-0.04em]">
+                                Confidence is explained in-product.
+                            </h3>
+                            <div class="mt-4 space-y-3">
+                                <div
+                                    v-for="signal in trustSignals"
+                                    :key="signal"
+                                    class="rounded-[20px] border border-white/50 bg-white/62 p-3.5 text-sm leading-6 text-muted-foreground backdrop-blur-md dark:border-white/8 dark:bg-white/6"
+                                >
+                                    {{ signal }}
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="hidden gap-4 border-t border-white/45 px-4 py-8 dark:border-white/8 md:grid md:px-8 lg:grid-cols-[0.9fr_1.1fr]">
                     <div class="ios-panel p-6">
                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                             Start here
@@ -362,7 +473,7 @@ const trustSignals = [
                     </div>
                 </section>
 
-                <section class="border-t border-white/45 px-4 py-8 dark:border-white/8 md:px-8">
+                <section class="hidden border-t border-white/45 px-4 py-8 dark:border-white/8 md:block md:px-8">
                     <div class="ios-surface p-6 md:p-7">
                         <div class="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
                             <div>
@@ -386,6 +497,20 @@ const trustSignals = [
                     </div>
                 </section>
             </main>
+
+            <div
+                v-if="canRegister && !$page.props.auth.user"
+                class="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] md:hidden"
+            >
+                <div class="mx-auto max-w-md">
+                    <Link
+                        href="/register"
+                        class="pointer-events-auto inline-flex h-14 w-full items-center justify-center rounded-full border border-white/60 bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_24px_46px_-18px_rgba(14,110,255,0.74)] backdrop-blur-xl"
+                    >
+                        Get started
+                    </Link>
+                </div>
+            </div>
         </div>
     </div>
 </template>
