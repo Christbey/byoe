@@ -3,7 +3,10 @@
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DisputeController;
+use App\Http\Controllers\Admin\ProviderTrustController;
+use App\Http\Controllers\Admin\ReviewProviderTrustController;
 use App\Http\Controllers\Admin\ResolveDisputeController;
+use App\Http\Controllers\Booking\StoreDisputeController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Provider\AcceptServiceRequestController;
@@ -70,6 +73,7 @@ Route::prefix('shop')->name('shop.')->middleware(['auth', 'verified', 'role:shop
         Route::resource('bookings', BookingController::class)->only(['index', 'show', 'destroy']);
         Route::post('/bookings/{booking}/complete', [BookingController::class, 'complete'])->name('bookings.complete');
         Route::post('/bookings/{booking}/rate', [BookingController::class, 'rate'])->name('bookings.rate');
+        Route::post('/bookings/{booking}/disputes', StoreDisputeController::class)->name('bookings.disputes.store');
 
         // Payments Resource
         Route::resource('payments', PaymentController::class)->only(['index']);
@@ -101,6 +105,7 @@ Route::prefix('provider')->name('provider.')->middleware(['auth', 'verified', 'r
         Route::resource('bookings', ProviderBookingController::class)->only(['index', 'show']);
         Route::post('/bookings/{booking}/complete', CompleteBookingController::class)->name('bookings.complete');
         Route::post('/bookings/{booking}/rate', [ProviderBookingController::class, 'rate'])->name('bookings.rate');
+        Route::post('/bookings/{booking}/disputes', StoreDisputeController::class)->name('bookings.disputes.store');
 
         Route::get('/earnings', EarningsController::class)->name('earnings');
         // Legacy redirects — payouts and ratings are now embedded in their respective pages
@@ -123,6 +128,8 @@ Route::prefix('provider')->name('provider.')->middleware(['auth', 'verified', 'r
 // Admin Portal
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:admin|support|ops'])->group(function () {
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
+    Route::get('/providers', ProviderTrustController::class)->name('providers');
+    Route::post('/providers/{provider}/review', ReviewProviderTrustController::class)->name('providers.review');
     Route::get('/users', UserController::class)->name('users');
     Route::get('/disputes', DisputeController::class)->name('disputes');
     Route::post('/disputes/{dispute}/resolve', ResolveDisputeController::class)->name('disputes.resolve');

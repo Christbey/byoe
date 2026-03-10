@@ -11,6 +11,23 @@ class Rating extends Model
     /** @use HasFactory<\Database\Factories\RatingFactory> */
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        $syncProviderTrust = function (Rating $rating): void {
+            $booking = $rating->booking()->with('provider')->first();
+
+            if (! $booking?->provider || $rating->rater_type !== 'shop' || $rating->ratee_id !== $booking->provider->user_id) {
+                return;
+            }
+
+            $booking->provider->updateRatingAggregates();
+            $booking->provider->refreshTrustMetrics();
+        };
+
+        static::saved($syncProviderTrust);
+        static::deleted($syncProviderTrust);
+    }
+
     /**
      * The attributes that are mass assignable.
      *

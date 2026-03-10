@@ -57,6 +57,8 @@ class DashboardController extends Controller
             ]);
         }
 
+        $provider->refreshTrustMetrics();
+
         $earningsThisMonth = Payout::where('provider_id', $provider->id)
             ->where('status', 'paid')
             ->whereMonth('paid_at', now()->month)

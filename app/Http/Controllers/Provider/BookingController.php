@@ -40,7 +40,7 @@ class BookingController extends Controller
     {
         $this->authorize('view', $booking);
 
-        $booking->load(['serviceRequest.shopLocation.shop', 'payment', 'payout', 'ratings']);
+        $booking->load(['serviceRequest.shopLocation.shop', 'payment', 'payout', 'ratings', 'disputes.filedByUser', 'disputes.resolvedByUser']);
 
         $hasRated = $booking->ratings()
             ->where('rater_id', $request->user()->id)

@@ -3,7 +3,6 @@
 use App\Models\Shop;
 use App\Services\StripeService;
 use Illuminate\Support\Facades\Log;
-use Stripe\Customer;
 use Stripe\Exception\InvalidRequestException;
 
 uses()->group('stripe', 'customer');
@@ -16,30 +15,37 @@ test('recreates customer when stripe customer is deleted', function () {
         'stripe_customer_id' => 'cus_deleted123',
     ]);
 
-    // Mock Stripe Customer retrieve to throw "resource not found" exception
-    $retrieveMock = mock('alias:'.Customer::class);
-    $retrieveMock->shouldReceive('retrieve')
-        ->with('cus_deleted123')
-        ->once()
-        ->andThrow(new InvalidRequestException('No such customer: cus_deleted123'));
+    $expectedPayload = [
+        'email' => $shop->user->email,
+        'name' => $shop->name,
+        'metadata' => [
+            'shop_id' => $shop->id,
+            'user_id' => $shop->user_id,
+        ],
+    ];
 
-    // Mock Stripe Customer create to return a new customer
-    $newCustomer = new stdClass;
-    $newCustomer->id = 'cus_new456';
+    $stripeService = new class($expectedPayload) extends StripeService
+    {
+        public function __construct(private array $expectedPayload)
+        {
+            parent::__construct();
+        }
 
-    $retrieveMock->shouldReceive('create')
-        ->once()
-        ->with([
-            'email' => $shop->user->email,
-            'name' => $shop->name,
-            'metadata' => [
-                'shop_id' => $shop->id,
-                'user_id' => $shop->user_id,
-            ],
-        ])
-        ->andReturn($newCustomer);
+        protected function retrieveStripeCustomer(string $customerId): mixed
+        {
+            expect($customerId)->toBe('cus_deleted123');
 
-    $stripeService = new StripeService;
+            throw new InvalidRequestException('No such customer: cus_deleted123');
+        }
+
+        protected function createStripeCustomer(array $payload): mixed
+        {
+            expect($payload)->toEqual($this->expectedPayload);
+
+            return (object) ['id' => 'cus_new456'];
+        }
+    };
+
     $customerId = $stripeService->createOrRetrieveShopCustomer($shop);
 
     // Verify new customer ID was returned and saved
@@ -60,17 +66,21 @@ test('returns existing customer when it still exists in stripe', function () {
         'stripe_customer_id' => 'cus_existing123',
     ]);
 
-    // Mock Stripe Customer retrieve to succeed
-    $existingCustomer = new stdClass;
-    $existingCustomer->id = 'cus_existing123';
+    $stripeService = new class extends StripeService
+    {
+        protected function retrieveStripeCustomer(string $customerId): mixed
+        {
+            expect($customerId)->toBe('cus_existing123');
 
-    $retrieveMock = mock('alias:'.Customer::class);
-    $retrieveMock->shouldReceive('retrieve')
-        ->with('cus_existing123')
-        ->once()
-        ->andReturn($existingCustomer);
+            return (object) ['id' => 'cus_existing123'];
+        }
 
-    $stripeService = new StripeService;
+        protected function createStripeCustomer(array $payload): mixed
+        {
+            throw new RuntimeException('createStripeCustomer should not be called for existing customers');
+        }
+    };
+
     $customerId = $stripeService->createOrRetrieveShopCustomer($shop);
 
     // Verify existing customer ID was returned
@@ -83,24 +93,35 @@ test('creates new customer when shop has no customer id', function () {
         'stripe_customer_id' => null,
     ]);
 
-    // Mock Stripe Customer create
-    $newCustomer = new stdClass;
-    $newCustomer->id = 'cus_new789';
+    $expectedPayload = [
+        'email' => $shop->user->email,
+        'name' => $shop->name,
+        'metadata' => [
+            'shop_id' => $shop->id,
+            'user_id' => $shop->user_id,
+        ],
+    ];
 
-    $createMock = mock('alias:'.Customer::class);
-    $createMock->shouldReceive('create')
-        ->once()
-        ->with([
-            'email' => $shop->user->email,
-            'name' => $shop->name,
-            'metadata' => [
-                'shop_id' => $shop->id,
-                'user_id' => $shop->user_id,
-            ],
-        ])
-        ->andReturn($newCustomer);
+    $stripeService = new class($expectedPayload) extends StripeService
+    {
+        public function __construct(private array $expectedPayload)
+        {
+            parent::__construct();
+        }
 
-    $stripeService = new StripeService;
+        protected function retrieveStripeCustomer(string $customerId): mixed
+        {
+            throw new RuntimeException('retrieveStripeCustomer should not be called when customer id is null');
+        }
+
+        protected function createStripeCustomer(array $payload): mixed
+        {
+            expect($payload)->toEqual($this->expectedPayload);
+
+            return (object) ['id' => 'cus_new789'];
+        }
+    };
+
     $customerId = $stripeService->createOrRetrieveShopCustomer($shop);
 
     // Verify new customer ID was returned and saved

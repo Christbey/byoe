@@ -82,6 +82,27 @@ export interface Provider {
     total_ratings: number;
     completed_bookings: number;
     is_active: boolean;
+    vetting_status: 'pending_review' | 'approved' | 'needs_attention' | 'suspended';
+    background_check_status: 'pending' | 'clear' | 'flagged' | 'expired';
+    identity_verified_at?: string | null;
+    vetting_completed_at?: string | null;
+    last_reviewed_at?: string | null;
+    trust_score: number;
+    reliability_score: number;
+    cancellation_count: number;
+    cancellation_rate: number;
+    no_show_count: number;
+    dispute_count: number;
+    completed_without_issue_count: number;
+    trust_notes?: string | null;
+    trust_tier?: 'elite' | 'trusted' | 'standard' | 'at_risk';
+    trust_action_items?: Array<{
+        title: string;
+        detail: string;
+        action_label: string;
+        action_href: string;
+        severity: 'warning' | 'danger' | 'info';
+    }>;
     availability_schedule?: Record<string, AvailabilityDay>;
     blackout_dates?: string[];
     min_notice_hours: number;
@@ -145,6 +166,15 @@ export interface Booking {
     updated_at: string;
     service_request?: ServiceRequest;
     provider?: Provider;
+    disputes?: Array<{
+        id: number;
+        dispute_type: 'payment' | 'service_quality' | 'cancellation' | 'no_show';
+        status: 'open' | 'under_review' | 'resolved' | 'closed';
+        description: string;
+        resolution_notes?: string | null;
+        created_at: string;
+        filed_by_user_id: number;
+    }>;
 }
 
 export interface Payout {

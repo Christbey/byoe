@@ -105,10 +105,13 @@ test('shop owner can complete a confirmed booking', function () {
     [
         'shopOwner' => $shopOwner,
         'provider' => $provider,
+        'serviceRequest' => $serviceRequest,
         'booking' => $booking,
     ] = shopWithBooking('confirmed');
 
-    $initialCount = $provider->completed_bookings;
+    Booking::factory()->count(4)->completed()->create([
+        'provider_id' => $provider->id,
+    ]);
 
     $response = $this->actingAs($shopOwner)->post("/shop/bookings/{$booking->id}/complete");
 
@@ -120,7 +123,7 @@ test('shop owner can complete a confirmed booking', function () {
     expect($booking->completed_at)->not->toBeNull();
 
     $provider->refresh();
-    expect($provider->completed_bookings)->toBe($initialCount + 1);
+    expect($provider->completed_bookings)->toBe(5);
 });
 
 test('shop owner cannot complete another shops booking', function () {

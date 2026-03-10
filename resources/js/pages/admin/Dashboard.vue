@@ -17,6 +17,8 @@ interface AdminStats {
     total_bookings: number;
     platform_fees_collected: number;
     disputes_requiring_attention: number;
+    providers_pending_review: number;
+    providers_at_risk: number;
 }
 
 interface ActivityItem {
@@ -41,6 +43,15 @@ interface Props {
         queue: boolean;
         storage: boolean;
     };
+    providers_requiring_review: {
+        id: number;
+        name: string;
+        email: string;
+        vetting_status: string;
+        background_check_status: string;
+        trust_score: number;
+        reliability_score: number;
+    }[];
 }
 
 const props = defineProps<Props>();
@@ -85,7 +96,7 @@ const formatDate = (date: string) => {
             </div>
 
             <!-- Key Metrics -->
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
                 <Card>
                     <CardHeader>
                         <CardDescription>Total Users</CardDescription>
@@ -138,6 +149,34 @@ const formatDate = (date: string) => {
                     <CardContent>
                         <p class="text-xs text-muted-foreground">
                             All time
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardDescription>Pending Reviews</CardDescription>
+                        <CardTitle class="text-3xl">
+                            {{ stats.providers_pending_review }}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-xs text-muted-foreground">
+                            Providers waiting on trust approval
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardDescription>Trust Alerts</CardDescription>
+                        <CardTitle class="text-3xl">
+                            {{ stats.providers_at_risk }}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-xs text-muted-foreground">
+                            Low trust, low reliability, or flagged review state
                         </p>
                     </CardContent>
                 </Card>
@@ -203,6 +242,42 @@ const formatDate = (date: string) => {
                     </CardContent>
                 </Card>
             </div>
+
+            <Card v-if="providers_requiring_review.length > 0">
+                <CardHeader>
+                    <CardTitle>Provider Trust Queue</CardTitle>
+                    <CardDescription>
+                        Providers requiring manual review or intervention
+                    </CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-3">
+                    <div
+                        v-for="provider in providers_requiring_review"
+                        :key="provider.id"
+                        class="flex flex-col gap-3 rounded-[20px] bg-muted/40 p-4 md:flex-row md:items-center md:justify-between"
+                    >
+                        <div>
+                            <p class="font-medium">{{ provider.name }}</p>
+                            <p class="text-sm text-muted-foreground">{{ provider.email }}</p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <Badge variant="outline">{{ provider.vetting_status.replace('_', ' ') }}</Badge>
+                                <Badge :variant="provider.background_check_status === 'flagged' ? 'destructive' : 'outline'">
+                                    Background {{ provider.background_check_status }}
+                                </Badge>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right text-sm">
+                                <p class="text-muted-foreground">Trust {{ provider.trust_score }}</p>
+                                <p class="text-muted-foreground">Reliability {{ provider.reliability_score }}</p>
+                            </div>
+                            <Button as="a" href="/admin/providers" variant="outline" size="sm">
+                                Review
+                            </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             <!-- Recent Activity & System Health -->
             <div class="grid gap-4 lg:grid-cols-2">

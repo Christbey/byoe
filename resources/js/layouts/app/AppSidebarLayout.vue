@@ -58,11 +58,11 @@ watch(
 <template>
     <AppShell variant="sidebar">
         <AppSidebar />
-        <AppContent variant="sidebar" class="overflow-x-hidden">
+        <AppContent variant="sidebar" class="overflow-x-hidden bg-transparent">
             <!-- Impersonation banner -->
             <div
                 v-if="isImpersonating"
-                class="flex items-center justify-between gap-4 bg-amber-500 px-4 py-2 text-sm font-medium text-amber-950"
+                class="mx-3 mt-3 flex items-center justify-between gap-4 rounded-[22px] border border-amber-200/70 bg-amber-100/85 px-4 py-3 text-sm font-medium text-amber-950 shadow-[0_16px_34px_-24px_rgba(217,119,6,0.45)] backdrop-blur-xl dark:border-amber-300/10 dark:bg-amber-500/12 dark:text-amber-100 md:mx-4"
             >
                 <div class="flex items-center gap-2">
                     <svg
@@ -90,10 +90,12 @@ watch(
                 </a>
             </div>
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-            <slot />
+            <div class="flex flex-1 flex-col px-3 pb-3 pt-3 md:px-4 md:pb-4">
+                <slot />
+            </div>
 
             <!-- Legal footer -->
-            <footer class="mt-auto border-t px-4 py-3 md:px-6">
+            <footer class="mx-3 mb-3 mt-auto rounded-[22px] border border-white/45 bg-white/60 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-white/5 md:mx-4">
                 <nav class="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <span class="text-xs text-muted-foreground">
                         &copy; {{ new Date().getFullYear() }} ShiftFinder
@@ -132,12 +134,12 @@ watch(
             >
                 <div
                     v-if="toast"
-                    class="fixed right-safe-4 bottom-safe-4 z-50 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium shadow-lg"
+                    class="fixed right-safe-4 bottom-safe-4 z-50 flex items-center gap-3 rounded-full border px-4 py-3 text-sm font-medium shadow-[0_18px_38px_-24px_rgba(15,23,42,0.45)] backdrop-blur-xl"
                     :class="{
-                        'bg-green-600 text-white': toast.type === 'success',
-                        'bg-destructive text-destructive-foreground':
+                        'border-emerald-300/40 bg-emerald-500/88 text-white': toast.type === 'success',
+                        'border-destructive/20 bg-destructive/90 text-destructive-foreground':
                             toast.type === 'error',
-                        'bg-blue-600 text-white': toast.type === 'info',
+                        'border-blue-300/40 bg-blue-500/88 text-white': toast.type === 'info',
                     }"
                 >
                     <svg

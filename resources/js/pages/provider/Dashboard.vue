@@ -31,6 +31,20 @@ interface ProviderStats {
 }
 
 interface Props {
+    provider: {
+        id: number;
+        trust_score: number;
+        reliability_score: number;
+        vetting_status: string;
+        trust_tier: string;
+        trust_action_items?: Array<{
+            title: string;
+            detail: string;
+            action_label: string;
+            action_href: string;
+            severity: 'warning' | 'danger' | 'info';
+        }>;
+    };
     earnings: EarningsStats;
     stats: ProviderStats;
     available_requests: ServiceRequest[];
@@ -156,6 +170,36 @@ const formatTime = (time: string) => {
                     :variant="stats.pending_invitations > 0 ? 'warning' : 'default'"
                 />
             </div>
+
+            <Card v-if="provider.trust_action_items?.length" class="border-amber-200/70 bg-amber-50/80">
+                <CardHeader>
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <CardTitle>Trust Tasks</CardTitle>
+                            <CardDescription>
+                                Trust {{ provider.trust_score }} · Reliability {{ provider.reliability_score }} ·
+                                {{ provider.vetting_status.replace('_', ' ') }}
+                            </CardDescription>
+                        </div>
+                        <Badge :variant="provider.trust_tier === 'at_risk' ? 'destructive' : 'outline'">
+                            {{ provider.trust_tier.replace('_', ' ') }}
+                        </Badge>
+                    </div>
+                </CardHeader>
+                <CardContent class="grid gap-3 md:grid-cols-2">
+                    <div
+                        v-for="item in provider.trust_action_items"
+                        :key="item.title"
+                        class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm"
+                    >
+                        <p class="text-sm font-semibold">{{ item.title }}</p>
+                        <p class="mt-1 text-sm text-muted-foreground">{{ item.detail }}</p>
+                        <Button :href="item.action_href" variant="outline" size="sm" class="mt-3">
+                            {{ item.action_label }}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
             <!-- Quick Actions -->
             <div class="flex flex-col sm:flex-row gap-3">

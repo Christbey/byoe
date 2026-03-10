@@ -30,6 +30,12 @@ class DashboardController extends Controller
             'total_bookings' => Booking::count(),
             'platform_fees_collected' => Payment::where('status', 'succeeded')->sum('amount') / 100,
             'disputes_requiring_attention' => Dispute::where('status', 'open')->count(),
+            'providers_pending_review' => Provider::where('vetting_status', 'pending_review')->count(),
+            'providers_at_risk' => Provider::query()
+                ->where('trust_score', '<', 60)
+                ->orWhere('reliability_score', '<', 70)
+                ->orWhere('background_check_status', 'flagged')
+                ->count(),
         ];
 
         // Recent activity — last 10 bookings + last 5 disputes merged into a flat list
@@ -64,6 +70,35 @@ class DashboardController extends Controller
             ->values()
             ->take(10);
 
+        $providersRequiringReview = Provider::with(['user'])
+            ->where(function ($query) {
+                $query->where('vetting_status', 'pending_review')
+                    ->orWhere('vetting_status', 'needs_attention')
+                    ->orWhere('background_check_status', 'flagged')
+                    ->orWhere('trust_score', '<', 60)
+                    ->orWhere('reliability_score', '<', 70);
+            })
+            ->orderByRaw("
+                case
+                    when vetting_status = 'pending_review' then 0
+                    when background_check_status = 'flagged' then 1
+                    when vetting_status = 'needs_attention' then 2
+                    else 3
+                end
+            ")
+            ->orderBy('trust_score')
+            ->limit(6)
+            ->get()
+            ->map(fn (Provider $provider) => [
+                'id' => $provider->id,
+                'name' => $provider->user?->name,
+                'email' => $provider->user?->email,
+                'vetting_status' => $provider->vetting_status,
+                'background_check_status' => $provider->background_check_status,
+                'trust_score' => $provider->trust_score,
+                'reliability_score' => $provider->reliability_score,
+            ]);
+
         // Revenue data — platform fees by day for the last 7 days
         $revenueDays = collect(range(6, 0))->map(fn ($daysAgo) => now()->subDays($daysAgo));
 
@@ -91,6 +126,7 @@ class DashboardController extends Controller
             'recent_activity' => $recentActivity,
             'revenue_data' => $revenueData,
             'system_health' => $systemHealth,
+            'providers_requiring_review' => $providersRequiringReview,
         ]);
     }
 

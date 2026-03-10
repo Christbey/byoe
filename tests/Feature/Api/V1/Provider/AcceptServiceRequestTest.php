@@ -14,7 +14,11 @@ use Laravel\Sanctum\Sanctum;
 // Helper function for creating an onboarded provider
 function createApiOnboardedProvider(User $user, bool $isActive = true): Provider
 {
-    $provider = Provider::factory()->create(['user_id' => $user->id, 'is_active' => $isActive]);
+    $provider = Provider::factory()->approved()->create([
+        'user_id' => $user->id,
+        'is_active' => $isActive,
+        'background_check_status' => 'clear',
+    ]);
     ProviderStripeAccount::factory()->onboarded()->create(['provider_id' => $provider->id]);
 
     return $provider;
@@ -127,7 +131,11 @@ test('inactive provider cannot accept request via API', function () {
 test('provider without Stripe account cannot accept request via API', function () {
     $user = User::factory()->create();
     $user->assignRole('provider');
-    Provider::factory()->create(['user_id' => $user->id, 'is_active' => true]);
+    Provider::factory()->approved()->create([
+        'user_id' => $user->id,
+        'is_active' => true,
+        'background_check_status' => 'clear',
+    ]);
 
     $shopOwner = User::factory()->create();
     $shop = Shop::factory()->create(['user_id' => $shopOwner->id]);

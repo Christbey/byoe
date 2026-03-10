@@ -10,166 +10,250 @@ withDefaults(
         canRegister: true,
     },
 );
+
+const featurePills = [
+    'Fast booking',
+    'Stripe payouts',
+    'Clear status tracking',
+];
+
+const quickStats = [
+    { label: 'Booking flow', value: '3 taps' },
+    { label: 'Contractor payout', value: 'Automatic' },
+    { label: 'Coverage style', value: 'On demand' },
+];
+
+const businessSteps = [
+    'Post a shift with a fixed rate and timing.',
+    'Get matched with an available contractor.',
+    'Complete the shift and release payment automatically.',
+];
+
+const providerSteps = [
+    'Browse jobs that fit your schedule.',
+    'Accept work without chasing invoices.',
+    'Track bookings, reviews, and payouts in one place.',
+];
 </script>
 
 <template>
-    <Head title="Bring Your Own Expertise — On-Demand Staffing for Local Businesses" />
+    <Head title="ShiftFinder" />
 
-    <div class="min-h-screen bg-background text-foreground">
-        <!-- Nav -->
-        <header class="border-b">
-            <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-                <span class="text-lg font-bold tracking-tight">ShiftFinder</span>
-                <nav class="flex items-center gap-3">
-                    <Link
-                        v-if="$page.props.auth.user"
-                        :href="dashboard()"
-                        class="rounded-md border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
-                    >
-                        Dashboard
-                    </Link>
-                    <template v-else>
+    <div class="min-h-screen px-4 py-4 text-foreground md:px-6 md:py-6">
+        <div class="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl flex-col overflow-hidden rounded-[36px] border border-white/45 bg-white/52 shadow-[0_28px_80px_-42px_rgba(15,23,42,0.36)] backdrop-blur-2xl dark:border-white/8 dark:bg-slate-950/38">
+            <header class="border-b border-white/45 px-6 py-5 dark:border-white/8 md:px-8">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex size-11 items-center justify-center rounded-[20px] bg-[linear-gradient(180deg,hsl(206_100%_64%),hsl(217_100%_54%))] shadow-[0_14px_28px_-16px_rgba(14,110,255,0.75)]">
+                            <span class="text-base font-semibold text-white">SF</span>
+                        </div>
+                        <div>
+                            <p class="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+                                ShiftFinder
+                            </p>
+                            <p class="text-sm font-medium tracking-[-0.02em]">
+                                Staffing, cleaned up.
+                            </p>
+                        </div>
+                    </div>
+
+                    <nav class="flex items-center gap-2">
                         <Link
-                            :href="login()"
-                            class="text-sm font-medium text-muted-foreground hover:text-foreground"
+                            v-if="$page.props.auth.user"
+                            :href="dashboard()"
+                            class="inline-flex h-11 items-center rounded-full border border-white/50 bg-white/76 px-5 text-sm font-medium shadow-[0_10px_28px_-20px_rgba(15,23,42,0.3)] backdrop-blur-md transition hover:bg-white/92 dark:border-white/8 dark:bg-white/8 dark:hover:bg-white/12"
                         >
-                            Log in
+                            Open dashboard
                         </Link>
-                        <Link
-                            v-if="canRegister"
-                            href="/register"
-                            class="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                        >
-                            Get started
-                        </Link>
-                    </template>
-                </nav>
-            </div>
-        </header>
-
-        <!-- Hero -->
-        <section class="mx-auto max-w-5xl px-6 py-20 text-center">
-            <h1 class="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-                Find skilled contractors.<br />
-                <span class="text-primary">Get flexible work.</span>
-            </h1>
-            <p class="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-                The marketplace connecting businesses with independent contractors — post shifts, accept jobs, get paid.
-            </p>
-
-            <!-- Dual CTA cards -->
-            <div v-if="canRegister && !$page.props.auth.user" class="mt-12 grid gap-6 md:grid-cols-2 max-w-2xl mx-auto">
-                <Link href="/register?role=shop_owner" class="group block">
-                    <div class="rounded-xl border-2 p-8 text-left transition-all hover:border-primary hover:shadow-md">
-                        <div class="mb-4 text-4xl">🏪</div>
-                        <h2 class="text-xl font-bold">I need staff</h2>
-                        <p class="mt-2 text-sm text-muted-foreground leading-relaxed">
-                            Post shifts, set your rate, and get matched with vetted contractors — no long-term commitments.
-                        </p>
-                        <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                            Register as a shop
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 transition-transform group-hover:translate-x-1">
-                                <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                </Link>
-
-                <Link href="/register?role=provider" class="group block">
-                    <div class="rounded-xl border-2 p-8 text-left transition-all hover:border-primary hover:shadow-md">
-                        <div class="mb-4 text-4xl">💼</div>
-                        <h2 class="text-xl font-bold">I want to work</h2>
-                        <p class="mt-2 text-sm text-muted-foreground leading-relaxed">
-                            Browse available shifts near you, set your own schedule, and get paid directly — no middleman.
-                        </p>
-                        <div class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                            Register as a contractor
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 transition-transform group-hover:translate-x-1">
-                                <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                </Link>
-            </div>
-
-            <div v-else-if="$page.props.auth.user" class="mt-8">
-                <Link :href="dashboard()" class="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-                    Go to Dashboard
-                </Link>
-            </div>
-        </section>
-
-        <!-- How it works -->
-        <section class="border-t bg-muted/30 py-20">
-            <div class="mx-auto max-w-5xl px-6">
-                <h2 class="text-center text-2xl font-bold tracking-tight md:text-3xl">How it works</h2>
-
-                <div class="mt-12 grid gap-12 md:grid-cols-2">
-                    <!-- Shop side -->
-                    <div class="space-y-6">
-                        <h3 class="font-semibold text-primary">For shops</h3>
-                        <div class="space-y-5">
-                            <div class="flex gap-4">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span>
-                                <div>
-                                    <p class="font-medium">Post a service request</p>
-                                    <p class="text-sm text-muted-foreground">Describe the shift, set a fixed rate, and choose a date.</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-4">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span>
-                                <div>
-                                    <p class="font-medium">A contractor accepts</p>
-                                    <p class="text-sm text-muted-foreground">Pre-authorize payment at booking — no surprises.</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-4">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
-                                <div>
-                                    <p class="font-medium">Mark it complete & rate</p>
-                                    <p class="text-sm text-muted-foreground">Payment releases automatically. Leave a review.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Provider side -->
-                    <div class="space-y-6">
-                        <h3 class="font-semibold text-primary">For contractors</h3>
-                        <div class="space-y-5">
-                            <div class="flex gap-4">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span>
-                                <div>
-                                    <p class="font-medium">Browse available shifts</p>
-                                    <p class="text-sm text-muted-foreground">See shifts near you with transparent fixed rates.</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-4">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span>
-                                <div>
-                                    <p class="font-medium">Accept what fits your schedule</p>
-                                    <p class="text-sm text-muted-foreground">You choose when and where — no obligations.</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-4">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
-                                <div>
-                                    <p class="font-medium">Get paid via Stripe</p>
-                                    <p class="text-sm text-muted-foreground">Direct deposit to your bank — fast, reliable, no cash handling.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        <template v-else>
+                            <Link
+                                :href="login()"
+                                class="inline-flex h-11 items-center rounded-full px-4 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+                            >
+                                Log in
+                            </Link>
+                            <Link
+                                v-if="canRegister"
+                                href="/register"
+                                class="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-[0_12px_28px_-14px_rgba(14,110,255,0.68)] transition hover:bg-primary/92"
+                            >
+                                Create account
+                            </Link>
+                        </template>
+                    </nav>
                 </div>
-            </div>
-        </section>
+            </header>
 
-        <!-- Footer -->
-        <footer class="border-t py-8">
-            <div class="mx-auto max-w-5xl px-6 flex items-center justify-between text-sm text-muted-foreground">
-                <span>© {{ new Date().getFullYear() }} ShiftFinder</span>
-                <Link :href="login()" class="hover:text-foreground">Log in</Link>
-            </div>
-        </footer>
+            <main class="flex flex-1 flex-col">
+                <section class="relative overflow-hidden px-6 py-10 md:px-8 md:py-12">
+                    <div class="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(97,182,255,0.28),_transparent_54%)]" />
+
+                    <div class="relative grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+                        <div class="space-y-7">
+                            <div class="flex flex-wrap gap-2">
+                                <span
+                                    v-for="pill in featurePills"
+                                    :key="pill"
+                                    class="rounded-full border border-white/55 bg-white/72 px-3 py-1 text-xs font-medium text-muted-foreground shadow-[0_8px_20px_-18px_rgba(15,23,42,0.35)] backdrop-blur-md dark:border-white/10 dark:bg-white/8"
+                                >
+                                    {{ pill }}
+                                </span>
+                            </div>
+
+                            <div class="max-w-3xl space-y-4">
+                                <h1 class="text-4xl font-semibold tracking-[-0.06em] text-foreground md:text-6xl">
+                                    Flexible staffing with a calmer, cleaner workflow.
+                                </h1>
+                                <p class="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
+                                    ShiftFinder helps local businesses fill service gaps fast while contractors manage work, bookings, and payouts from one polished dashboard.
+                                </p>
+                            </div>
+
+                            <div class="flex flex-wrap gap-3">
+                                <template v-if="canRegister && !$page.props.auth.user">
+                                    <Link
+                                        href="/register?role=shop_owner"
+                                        class="inline-flex h-12 items-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[0_14px_32px_-16px_rgba(14,110,255,0.7)] transition hover:bg-primary/92"
+                                    >
+                                        I need staff
+                                    </Link>
+                                    <Link
+                                        href="/register?role=provider"
+                                        class="inline-flex h-12 items-center rounded-full border border-white/55 bg-white/78 px-6 text-sm font-medium shadow-[0_10px_28px_-20px_rgba(15,23,42,0.32)] backdrop-blur-md transition hover:bg-white/92 dark:border-white/10 dark:bg-white/8 dark:hover:bg-white/12"
+                                    >
+                                        I want to work
+                                    </Link>
+                                </template>
+                                <Link
+                                    v-else-if="$page.props.auth.user"
+                                    :href="dashboard()"
+                                    class="inline-flex h-12 items-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-[0_14px_32px_-16px_rgba(14,110,255,0.7)] transition hover:bg-primary/92"
+                                >
+                                    Continue to dashboard
+                                </Link>
+                            </div>
+
+                            <div class="grid gap-3 sm:grid-cols-3">
+                                <div
+                                    v-for="stat in quickStats"
+                                    :key="stat.label"
+                                    class="ios-panel px-4 py-4"
+                                >
+                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                        {{ stat.label }}
+                                    </p>
+                                    <p class="mt-2 text-xl font-semibold tracking-[-0.03em]">
+                                        {{ stat.value }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ios-surface relative overflow-hidden p-5 md:p-6">
+                            <div class="absolute inset-x-6 top-0 h-24 rounded-b-[40px] bg-[radial-gradient(circle_at_center,_rgba(97,182,255,0.28),_transparent_70%)]" />
+                            <div class="relative space-y-5">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                            Live snapshot
+                                        </p>
+                                        <h2 class="mt-2 text-2xl font-semibold tracking-[-0.04em]">
+                                            Swift, readable operations.
+                                        </h2>
+                                    </div>
+                                    <span class="rounded-full bg-emerald-500/14 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                                        Active
+                                    </span>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div class="ios-panel p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-medium">Morning espresso coverage</p>
+                                                <p class="mt-1 text-sm text-muted-foreground">Tomorrow, 7:00 AM to 1:00 PM</p>
+                                            </div>
+                                            <span class="text-lg font-semibold tracking-[-0.03em]">$180</span>
+                                        </div>
+                                    </div>
+                                    <div class="ios-panel p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-medium">Assigned contractor</p>
+                                                <p class="mt-1 text-sm text-muted-foreground">Stripe-ready, rating 4.9</p>
+                                            </div>
+                                            <span class="rounded-full bg-primary/12 px-3 py-1 text-xs font-semibold text-primary">
+                                                Confirmed
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="ios-panel p-4">
+                                        <p class="text-sm font-medium">Timeline</p>
+                                        <div class="mt-3 flex items-center gap-2">
+                                            <div class="h-2 flex-1 rounded-full bg-primary" />
+                                            <div class="h-2 flex-1 rounded-full bg-primary/35" />
+                                            <div class="h-2 flex-1 rounded-full bg-muted" />
+                                        </div>
+                                        <div class="mt-2 flex justify-between text-xs text-muted-foreground">
+                                            <span>Posted</span>
+                                            <span>Booked</span>
+                                            <span>Paid</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid gap-4 border-t border-white/45 px-6 py-8 dark:border-white/8 md:px-8 lg:grid-cols-2">
+                    <div class="ios-panel p-6">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            For businesses
+                        </p>
+                        <h3 class="mt-3 text-2xl font-semibold tracking-[-0.04em]">
+                            Staff gaps handled without operational clutter.
+                        </h3>
+                        <div class="mt-5 space-y-4">
+                            <div
+                                v-for="(step, index) in businessSteps"
+                                :key="step"
+                                class="flex items-start gap-3"
+                            >
+                                <span class="flex size-8 items-center justify-center rounded-full bg-primary/12 text-sm font-semibold text-primary">
+                                    {{ index + 1 }}
+                                </span>
+                                <p class="pt-1 text-sm leading-6 text-muted-foreground">
+                                    {{ step }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ios-panel p-6">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            For contractors
+                        </p>
+                        <h3 class="mt-3 text-2xl font-semibold tracking-[-0.04em]">
+                            Work discovery with less friction and better visibility.
+                        </h3>
+                        <div class="mt-5 space-y-4">
+                            <div
+                                v-for="(step, index) in providerSteps"
+                                :key="step"
+                                class="flex items-start gap-3"
+                            >
+                                <span class="flex size-8 items-center justify-center rounded-full bg-white/80 text-sm font-semibold text-foreground shadow-[0_10px_18px_-14px_rgba(15,23,42,0.35)] dark:bg-white/10">
+                                    {{ index + 1 }}
+                                </span>
+                                <p class="pt-1 text-sm leading-6 text-muted-foreground">
+                                    {{ step }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
     </div>
 </template>

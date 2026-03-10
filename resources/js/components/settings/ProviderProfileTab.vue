@@ -181,7 +181,7 @@ const navigateToEdit = () => {
             </div>
 
             <!-- Profile Stats -->
-            <div class="grid gap-4 md:grid-cols-2">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Card>
                     <CardHeader>
                         <CardDescription>Average Rating</CardDescription>
@@ -192,6 +192,39 @@ const navigateToEdit = () => {
                     <CardContent>
                         <p class="text-xs text-muted-foreground">
                             Based on {{ provider.total_ratings || 0 }} ratings
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardDescription>Trust Score</CardDescription>
+                        <CardTitle class="text-3xl">
+                            {{ provider.trust_score ?? 0 }}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="flex items-center gap-2">
+                            <Badge :variant="provider.trust_tier === 'at_risk' ? 'destructive' : provider.trust_tier === 'elite' ? 'success' : provider.trust_tier === 'trusted' ? 'default' : 'outline'">
+                                {{ (provider.trust_tier || 'standard').replace('_', ' ') }}
+                            </Badge>
+                            <span class="text-xs text-muted-foreground">
+                                Vetting {{ provider.vetting_status.replace('_', ' ') }}
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardDescription>Reliability</CardDescription>
+                        <CardTitle class="text-3xl">
+                            {{ provider.reliability_score ?? 0 }}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-xs text-muted-foreground">
+                            {{ provider.cancellation_rate?.toFixed(1) || '0.0' }}% cancellation rate · {{ provider.dispute_count || 0 }} disputes
                         </p>
                     </CardContent>
                 </Card>
@@ -210,6 +243,78 @@ const navigateToEdit = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Trust & Verification</CardTitle>
+                    <CardDescription>How the platform currently evaluates your account</CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-4">
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div class="rounded-[20px] bg-muted/40 p-4">
+                            <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Vetting</p>
+                            <div class="mt-2 flex items-center gap-2">
+                                <Badge :variant="provider.vetting_status === 'approved' ? 'success' : provider.vetting_status === 'needs_attention' ? 'destructive' : provider.vetting_status === 'suspended' ? 'secondary' : 'warning'">
+                                    {{ provider.vetting_status.replace('_', ' ') }}
+                                </Badge>
+                            </div>
+                            <p class="mt-2 text-sm text-muted-foreground">
+                                {{ provider.trust_notes || 'No manual review notes yet.' }}
+                            </p>
+                        </div>
+                        <div class="rounded-[20px] bg-muted/40 p-4">
+                            <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Background Check</p>
+                            <div class="mt-2 flex items-center gap-2">
+                                <Badge :variant="provider.background_check_status === 'clear' ? 'success' : provider.background_check_status === 'flagged' ? 'destructive' : 'warning'">
+                                    {{ provider.background_check_status }}
+                                </Badge>
+                            </div>
+                            <p class="mt-2 text-sm text-muted-foreground">
+                                Identity {{ provider.identity_verified_at ? 'verified' : 'not yet verified' }}
+                            </p>
+                        </div>
+                        <div class="rounded-[20px] bg-muted/40 p-4">
+                            <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Operational Record</p>
+                            <p class="mt-2 text-sm">
+                                {{ provider.completed_without_issue_count || 0 }} clean completions
+                            </p>
+                            <p class="mt-1 text-sm text-muted-foreground">
+                                {{ provider.no_show_count || 0 }} no-shows recorded
+                            </p>
+                        </div>
+                    </div>
+                    <p v-if="provider.vetting_status !== 'approved'" class="text-sm text-muted-foreground">
+                        Your account can still be edited, but payouts and booking confidence stay limited until trust review is approved.
+                    </p>
+                </CardContent>
+            </Card>
+
+            <Card v-if="provider.trust_action_items?.length" class="border-amber-200/70 bg-amber-50/80">
+                <CardHeader>
+                    <CardTitle>Next Steps</CardTitle>
+                    <CardDescription>What to fix next to improve trust and keep your account in good standing.</CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-3">
+                    <div
+                        v-for="item in provider.trust_action_items"
+                        :key="item.title"
+                        class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-foreground">{{ item.title }}</p>
+                                <p class="text-sm text-muted-foreground">{{ item.detail }}</p>
+                            </div>
+                            <Badge :variant="item.severity === 'danger' ? 'destructive' : 'outline'">
+                                {{ item.severity }}
+                            </Badge>
+                        </div>
+                        <Button as="a" :href="item.action_href" variant="outline" size="sm" class="mt-3">
+                            {{ item.action_label }}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
             <!-- Profile Information -->
             <Card>

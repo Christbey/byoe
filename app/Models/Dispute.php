@@ -11,6 +11,27 @@ class Dispute extends Model
     /** @use HasFactory<\Database\Factories\DisputeFactory> */
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        $syncProviderTrust = function (Dispute $dispute): void {
+            $booking = $dispute->booking()->with('provider')->first();
+
+            if (! $booking?->provider) {
+                return;
+            }
+
+            $booking->provider->refreshTrustMetrics();
+        };
+
+        static::saved($syncProviderTrust);
+        static::deleted($syncProviderTrust);
+    }
+
+    /**
+     * @var list<string>
+     */
+    protected $appends = ['severity', 'priority_score'];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -154,5 +175,43 @@ class Dispute extends Model
     public function isNoShowDispute(): bool
     {
         return $this->dispute_type === 'no_show';
+    }
+
+    /**
+     * Human-friendly severity for ops review.
+     */
+    public function getSeverityAttribute(): string
+    {
+        if ($this->isNoShowDispute() || $this->isPaymentDispute()) {
+            return 'high';
+        }
+
+        if ($this->isServiceQualityDispute()) {
+            return 'medium';
+        }
+
+        return 'low';
+    }
+
+    /**
+     * Numeric priority used to sort disputes requiring intervention.
+     */
+    public function getPriorityScoreAttribute(): int
+    {
+        $base = match ($this->severity) {
+            'high' => 80,
+            'medium' => 55,
+            default => 35,
+        };
+
+        if ($this->status === 'open') {
+            $base += 15;
+        }
+
+        if ($this->status === 'under_review') {
+            $base += 8;
+        }
+
+        return min(100, $base + min(15, (int) $this->created_at->diffInDays(now())));
     }
 }

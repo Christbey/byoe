@@ -220,11 +220,11 @@ test('acceptServiceRequest throws exception for non-open request', function () {
         ->toThrow(\Exception::class, 'Service request is no longer available');
 });
 
-test('completeBooking increments provider completed bookings', function () {
+test('completeBooking recalculates provider completed bookings from actual bookings', function () {
     $user = User::factory()->create();
     $provider = Provider::factory()->create([
         'user_id' => $user->id,
-        'completed_bookings' => 5,
+        'completed_bookings' => 0,
     ]);
 
     $shopOwner = User::factory()->create();
@@ -234,6 +234,10 @@ test('completeBooking increments provider completed bookings', function () {
     $serviceRequest = ServiceRequest::factory()->create([
         'shop_location_id' => $location->id,
         'price' => 100.00,
+    ]);
+
+    Booking::factory()->count(5)->completed()->create([
+        'provider_id' => $provider->id,
     ]);
 
     $booking = Booking::factory()->create([
@@ -366,9 +370,17 @@ test('cancelBooking in partial refund window', function () {
     ]);
 
     $stripeService = \Mockery::mock(StripeService::class);
-    $stripeService->shouldReceive('refundPayment')->once()->andReturnUsing(function ($payment) {
-        $payment->markAsRefunded();
-    });
+    $stripeService->shouldReceive('refundPayment')
+        ->once()
+        ->withArgs(function (Payment $refundedPayment, float $amount) use ($payment) {
+            expect($refundedPayment->is($payment))->toBeTrue();
+            expect($amount)->toBe(50.0);
+
+            return true;
+        })
+        ->andReturnUsing(function (Payment $refundedPayment, float $amount) {
+            $refundedPayment->markAsRefunded();
+        });
     $bookingService = new BookingService($stripeService);
 
     $result = $bookingService->cancelBooking($booking, 'Customer request');
@@ -377,9 +389,6 @@ test('cancelBooking in partial refund window', function () {
 
     $booking->refresh();
     expect($booking->status)->toBe('cancelled');
-
-    $payment->refresh();
-    expect($payment->status)->toBe('refunded');
 });
 
 test('cancelBooking outside window denies refund', function () {

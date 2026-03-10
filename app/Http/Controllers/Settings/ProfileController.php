@@ -47,6 +47,8 @@ class ProfileController extends Controller
         $provider = $user->provider;
 
         if ($provider) {
+            $provider->refreshTrustMetrics();
+
             $defaultSchedule = collect(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
                 ->mapWithKeys(fn ($day) => [$day => ['available' => false, 'start' => '08:00', 'end' => '17:00']])
                 ->toArray();

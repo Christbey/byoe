@@ -79,6 +79,8 @@ class BookingController extends Controller
             'provider.user',
             'payment',
             'ratings',
+            'disputes.filedByUser',
+            'disputes.resolvedByUser',
         ]);
 
         $user = $request->user();

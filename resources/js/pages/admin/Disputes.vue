@@ -22,6 +22,8 @@ interface Dispute {
     description: string;
     status: 'open' | 'under_review' | 'resolved' | 'closed';
     resolution_notes?: string;
+    severity: 'low' | 'medium' | 'high';
+    priority_score: number;
     created_at: string;
     updated_at: string;
     filed_by?: { name: string; email: string };
@@ -65,7 +67,7 @@ const filters: { key: keyof StatusCounts; label: string }[] = [
 
 const resolutionForm = useForm({
     notes: '',
-    status: 'resolved' as 'resolved' | 'closed',
+    status: 'resolved' as 'under_review' | 'resolved' | 'closed',
 });
 
 const handleFilterChange = (filterKey: string) => {
@@ -80,6 +82,20 @@ const handleFilterChange = (filterKey: string) => {
 const handleResolveDispute = (disputeId: number) => {
     resolvingDisputeId.value = disputeId;
     resolutionForm.notes = '';
+    resolutionForm.status = 'resolved';
+};
+
+const handleMarkUnderReview = (disputeId: number) => {
+    resolutionForm.transform(() => ({
+        status: 'under_review',
+        notes: '',
+    })).post(`/admin/disputes/${disputeId}/resolve`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            resolutionForm.reset();
+            resolutionForm.clearErrors();
+        },
+    });
 };
 
 const handleSubmitResolution = (disputeId: number) => {
@@ -110,6 +126,16 @@ const getStatusColor = (status: string) => {
         closed: 'outline',
     };
     return colors[status] || 'outline';
+};
+
+const getSeverityColor = (severity: string) => {
+    const colors: Record<string, string> = {
+        low: 'outline',
+        medium: 'warning',
+        high: 'destructive',
+    };
+
+    return colors[severity] || 'outline';
 };
 </script>
 
@@ -159,6 +185,9 @@ const getStatusColor = (status: string) => {
                                     <Badge :variant="getStatusColor(dispute.status)">
                                         {{ dispute.status.replace('_', ' ') }}
                                     </Badge>
+                                    <Badge :variant="getSeverityColor(dispute.severity)">
+                                        {{ dispute.severity }} severity
+                                    </Badge>
                                 </div>
                             </div>
                             <p class="text-sm text-muted-foreground shrink-0">
@@ -193,6 +222,7 @@ const getStatusColor = (status: string) => {
                             <a :href="`/admin/bookings/${dispute.booking_id}`" class="ml-2 text-primary hover:underline">
                                 #{{ dispute.booking_id }}
                             </a>
+                            <span class="ml-3 text-muted-foreground">Priority {{ dispute.priority_score }}</span>
                         </div>
 
                         <!-- Resolution Notes (if resolved) -->
@@ -247,6 +277,14 @@ const getStatusColor = (status: string) => {
                         </div>
                     </CardContent>
                     <CardFooter v-if="dispute.status === 'open' || dispute.status === 'under_review'" class="flex gap-2">
+                        <Button
+                            v-if="dispute.status === 'open' && resolvingDisputeId !== dispute.id"
+                            @click="handleMarkUnderReview(dispute.id)"
+                            variant="outline"
+                            size="sm"
+                        >
+                            Mark Under Review
+                        </Button>
                         <Button
                             v-if="resolvingDisputeId !== dispute.id"
                             @click="handleResolveDispute(dispute.id)"

@@ -20,10 +20,11 @@ class DisputeController extends Controller
             'filedByUser',
         ])
             ->when($statusFilter !== 'all', fn ($q) => $q->where('status', $statusFilter))
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->get()
+            ->sortByDesc(fn (Dispute $dispute) => $dispute->priority_score)
+            ->values();
 
-        $disputes->getCollection()->transform(function (Dispute $dispute) {
+        $disputes = $disputes->map(function (Dispute $dispute) {
             $booking = $dispute->booking;
             $shopUser = $booking?->serviceRequest?->shopLocation?->shop?->user;
             $providerUser = $booking?->provider?->user;
@@ -42,6 +43,14 @@ class DisputeController extends Controller
             return $dispute;
         });
 
+        $paginatedDisputes = new \Illuminate\Pagination\LengthAwarePaginator(
+            items: $disputes->forPage(\Illuminate\Pagination\Paginator::resolveCurrentPage(), 15)->values(),
+            total: $disputes->count(),
+            perPage: 15,
+            currentPage: \Illuminate\Pagination\Paginator::resolveCurrentPage(),
+            options: ['path' => request()->url(), 'query' => request()->query()],
+        );
+
         $statusCounts = [
             'open' => Dispute::where('status', 'open')->count(),
             'under_review' => Dispute::where('status', 'under_review')->count(),
@@ -50,7 +59,7 @@ class DisputeController extends Controller
         ];
 
         return Inertia::render('admin/Disputes', [
-            'disputes' => $disputes,
+            'disputes' => $paginatedDisputes,
             'filter' => $statusFilter,
             'statusCounts' => $statusCounts,
         ]);

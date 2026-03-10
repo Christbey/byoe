@@ -81,15 +81,19 @@ test('provider cannot complete an already completed booking', function () {
     $response->assertSessionHas('error');
 });
 
-test('completing booking increments provider completed bookings count', function () {
+test('completing booking recalculates provider completed bookings count from actual bookings', function () {
     $user = User::factory()->create();
     $user->assignRole('provider');
-    $provider = Provider::factory()->create(['user_id' => $user->id, 'completed_bookings' => 5]);
+    $provider = Provider::factory()->create(['user_id' => $user->id, 'completed_bookings' => 0]);
 
     $shopOwner = User::factory()->create();
     $shop = Shop::factory()->create(['user_id' => $shopOwner->id]);
     $location = ShopLocation::factory()->create(['shop_id' => $shop->id]);
     $serviceRequest = ServiceRequest::factory()->create(['shop_location_id' => $location->id]);
+
+    Booking::factory()->count(5)->completed()->create([
+        'provider_id' => $provider->id,
+    ]);
 
     $booking = Booking::factory()->create([
         'service_request_id' => $serviceRequest->id,

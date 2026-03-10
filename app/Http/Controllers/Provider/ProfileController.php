@@ -103,13 +103,28 @@ class ProfileController extends Controller
                 'is_active' => $validated['is_active'] ?? true,
                 'service_area_max_miles' => $validated['service_area_max_miles'] ?? 25,
                 'preferred_zip_codes' => $validated['preferred_zip_codes'] ?? [],
+                'vetting_status' => 'pending_review',
+                'background_check_status' => 'pending',
             ]);
 
             return redirect()->route('settings.provider')
                 ->with('success', 'Welcome! Your provider profile has been created. Set your availability to start accepting jobs.');
         }
 
+        $shouldReturnToReview = collect(['industry_id', 'bio', 'skills', 'years_experience', 'certifications'])
+            ->contains(fn ($field) => array_key_exists($field, $validated) && $provider->{$field} !== $validated[$field]);
+
         $provider->update($validated);
+
+        if ($shouldReturnToReview && $provider->vetting_status === 'approved') {
+            $provider->update([
+                'vetting_status' => 'pending_review',
+                'trust_notes' => 'Profile changed after approval and requires another review.',
+                'vetting_completed_at' => null,
+            ]);
+        }
+
+        $provider->refreshTrustMetrics();
 
         return redirect()->route('settings.provider')
             ->with('success', 'Profile updated successfully!');

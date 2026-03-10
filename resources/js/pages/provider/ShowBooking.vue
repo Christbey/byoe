@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { Booking } from '@/types/marketplace';
@@ -42,6 +42,11 @@ const completing = ref(false);
 const ratingValue = ref(0);
 const ratingComment = ref('');
 const isRating = ref(false);
+const showingDisputeForm = ref(false);
+const disputeForm = useForm({
+    dispute_type: 'service_quality',
+    description: '',
+});
 
 const completeBooking = () => {
     if (!confirm('Mark this booking as complete? This confirms the service has been delivered.')) return;
@@ -61,6 +66,17 @@ const submitRating = () => {
         { rating: ratingValue.value, comment: ratingComment.value },
         { onFinish: () => { isRating.value = false; } },
     );
+};
+
+const submitDispute = () => {
+    disputeForm.post(`/provider/bookings/${props.booking.id}/disputes`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showingDisputeForm.value = false;
+            disputeForm.reset('description');
+            disputeForm.dispute_type = 'service_quality';
+        },
+    });
 };
 
 
@@ -94,6 +110,9 @@ const shopName = props.booking.service_request?.shop_location?.shop?.name ?? 'Sh
                         @click="completeBooking"
                     >
                         {{ completing ? 'Completing...' : 'Mark Complete' }}
+                    </Button>
+                    <Button variant="outline" @click="showingDisputeForm = !showingDisputeForm">
+                        {{ showingDisputeForm ? 'Hide Issue Form' : 'Report an Issue' }}
                     </Button>
                     <Button as="a" href="/provider/bookings" variant="outline">Back to List</Button>
                 </div>
@@ -221,6 +240,47 @@ const shopName = props.booking.service_request?.shop_location?.shop?.name ?? 'Sh
                     <Card v-if="booking.status === 'completed' && hasRated" class="border-green-200 bg-green-50 dark:bg-green-950/20">
                         <CardContent class="py-4">
                             <p class="text-sm text-green-700 dark:text-green-300">✓ You've rated this shop. Thank you!</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card v-if="showingDisputeForm || booking.disputes?.length" class="border-rose-200/70 bg-rose-50/70">
+                        <CardHeader>
+                            <CardTitle>Issues & Disputes</CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-4">
+                            <div v-if="showingDisputeForm" class="space-y-3 rounded-2xl border border-white/60 bg-white/80 p-4">
+                                <select v-model="disputeForm.dispute_type" class="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                                    <option value="service_quality">Service quality</option>
+                                    <option value="payment">Payment</option>
+                                    <option value="cancellation">Cancellation</option>
+                                    <option value="no_show">No-show</option>
+                                </select>
+                                <textarea
+                                    v-model="disputeForm.description"
+                                    rows="4"
+                                    placeholder="Describe the issue, what happened, and what support should know."
+                                    class="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                                <div class="flex gap-2">
+                                    <Button :disabled="disputeForm.processing" @click="submitDispute">
+                                        {{ disputeForm.processing ? 'Submitting...' : 'Submit Dispute' }}
+                                    </Button>
+                                    <Button variant="outline" @click="showingDisputeForm = false">Cancel</Button>
+                                </div>
+                            </div>
+
+                            <div v-if="booking.disputes?.length" class="space-y-3">
+                                <div v-for="dispute in booking.disputes" :key="dispute.id" class="rounded-2xl border border-white/60 bg-white/80 p-4">
+                                    <div class="flex items-center gap-2">
+                                        <Badge variant="outline">{{ dispute.dispute_type.replace('_', ' ') }}</Badge>
+                                        <Badge :variant="dispute.status === 'resolved' || dispute.status === 'closed' ? 'success' : 'destructive'">
+                                            {{ dispute.status.replace('_', ' ') }}
+                                        </Badge>
+                                    </div>
+                                    <p class="mt-3 text-sm text-muted-foreground">{{ dispute.description }}</p>
+                                    <p v-if="dispute.resolution_notes" class="mt-2 text-sm text-foreground">{{ dispute.resolution_notes }}</p>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

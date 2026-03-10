@@ -12,8 +12,6 @@ import { Button } from '@/components/ui/button';
 import Badge from '@/components/ui/badge/Badge.vue';
 import { dashboard } from '@/routes';
 
-// ─── Shared types ────────────────────────────────────────────────────────────
-
 interface ProviderStats {
     earnings_this_month: number;
     earnings_this_week: number;
@@ -31,12 +29,10 @@ interface ShopStats {
 
 interface Props {
     view: 'provider' | 'shop' | 'default';
-    // Provider props
     stats?: ProviderStats | ShopStats;
     upcoming_bookings?: Booking[];
     available_requests?: ServiceRequest[];
     recent_activity?: Booking[];
-    // Shop props
     recent_requests?: ServiceRequest[];
 }
 
@@ -51,8 +47,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard() },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
@@ -62,14 +56,12 @@ const formatDate = (date: string) =>
 const formatTime = (time: string) => {
     if (!time) return '';
 
-    // Handle plain time strings like "08:00:00" or "08:00"
     const [hours, minutes] = time.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
 
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
-
 
 const providerStats = () => props.stats as ProviderStats;
 const shopStats = () => props.stats as ShopStats;
@@ -79,254 +71,280 @@ const shopStats = () => props.stats as ShopStats;
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4 md:p-6">
-
-            <!-- ═══════════════════════════════════ PROVIDER VIEW ═══════ -->
+        <div class="flex h-full flex-1 flex-col gap-5">
             <template v-if="view === 'provider'">
-                <div class="space-y-2">
-                    <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Provider Dashboard</h1>
-                    <p class="text-sm text-muted-foreground">Track your earnings and upcoming bookings</p>
-                </div>
+                <section class="ios-surface overflow-hidden px-5 py-6 md:px-7">
+                    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                        <div class="space-y-3">
+                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                                Provider dashboard
+                            </p>
+                            <div>
+                                <h1 class="text-3xl font-semibold tracking-[-0.05em] md:text-4xl">
+                                    Your schedule, payouts, and momentum.
+                                </h1>
+                                <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
+                                    See open requests, monitor upcoming work, and keep earnings visible without digging through menus.
+                                </p>
+                            </div>
+                        </div>
 
-                <!-- Earnings Row -->
-                    <div class="grid gap-4 md:grid-cols-3">
-                        <Card class="border-primary/30">
-                            <CardHeader class="pb-2">
-                                <CardDescription>This Week</CardDescription>
-                                <CardTitle class="text-3xl text-primary">
+                        <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[26rem]">
+                            <div class="ios-panel px-4 py-4">
+                                <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">This week</p>
+                                <p class="mt-2 text-2xl font-semibold tracking-[-0.04em] text-primary">
                                     {{ formatCurrency(providerStats().earnings_this_week) }}
-                                </CardTitle>
-                            </CardHeader>
-                        </Card>
-                        <Card>
-                            <CardHeader class="pb-2">
-                                <CardDescription>This Month</CardDescription>
-                                <CardTitle class="text-3xl">
-                                    {{ formatCurrency(providerStats().earnings_this_month) }}
-                                </CardTitle>
-                            </CardHeader>
-                        </Card>
-                        <Card>
-                            <CardHeader class="pb-2">
-                                <CardDescription>All Time</CardDescription>
-                                <CardTitle class="text-3xl">
-                                    {{ formatCurrency(providerStats().total_earnings) }}
-                                </CardTitle>
-                            </CardHeader>
-                        </Card>
+                                </p>
+                            </div>
+                            <div class="ios-panel px-4 py-4">
+                                <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Upcoming</p>
+                                <p class="mt-2 text-2xl font-semibold tracking-[-0.04em]">
+                                    {{ providerStats().upcoming_bookings }}
+                                </p>
+                            </div>
+                            <div class="ios-panel px-4 py-4">
+                                <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Rating</p>
+                                <p class="mt-2 text-2xl font-semibold tracking-[-0.04em]">
+                                    {{ Number(providerStats().average_rating).toFixed(1) }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
+                </section>
 
-                    <!-- Quick Stats Row -->
-                    <div class="grid gap-4 md:grid-cols-3">
-                        <Card>
-                            <CardHeader class="pb-2">
-                                <CardDescription>Upcoming Jobs</CardDescription>
-                                <CardTitle class="text-2xl">{{ providerStats().upcoming_bookings }}</CardTitle>
-                            </CardHeader>
-                        </Card>
-                        <Card>
-                            <CardHeader class="pb-2">
-                                <CardDescription>Completed Jobs</CardDescription>
-                                <CardTitle class="text-2xl">{{ providerStats().completed_bookings }}</CardTitle>
-                            </CardHeader>
-                        </Card>
-                        <Card>
-                            <CardHeader class="pb-2">
-                                <CardDescription>Average Rating</CardDescription>
-                                <CardTitle class="text-2xl">
-                                    {{ Number(providerStats().average_rating).toFixed(1) }} ★
-                                </CardTitle>
-                            </CardHeader>
-                        </Card>
-                    </div>
+                <section class="flex flex-wrap gap-3">
+                    <Button as="a" href="/provider/available-requests">Browse requests</Button>
+                    <Button as="a" href="/provider/bookings" variant="outline">My bookings</Button>
+                    <Button as="a" href="/provider/earnings" variant="outline">Payout history</Button>
+                </section>
 
-                    <!-- Quick Actions -->
-                    <div class="flex flex-wrap gap-3">
-                        <Button as="a" href="/provider/available-requests">Browse Available Requests</Button>
-                        <Button as="a" href="/provider/bookings" variant="outline">My Bookings</Button>
-                        <Button as="a" href="/provider/earnings" variant="outline">Earnings Detail</Button>
-                    </div>
-
-                    <!-- Available Service Requests -->
+                <section class="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Available Requests</CardTitle>
-                            <CardDescription>Recent requests you can accept</CardDescription>
+                        <CardHeader class="px-6 pb-0">
+                            <CardTitle class="text-2xl tracking-[-0.04em]">Available requests</CardTitle>
+                            <CardDescription>Recent work you can accept right now</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div v-if="available_requests.length > 0" class="divide-y">
+                        <CardContent class="px-6">
+                            <div v-if="available_requests.length > 0" class="space-y-3">
                                 <div
                                     v-for="request in available_requests"
                                     :key="request.id"
-                                    class="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0"
+                                    class="rounded-[22px] border border-white/50 bg-white/62 p-4 backdrop-blur-md dark:border-white/8 dark:bg-white/6"
                                 >
-                                    <div class="flex-1 min-w-0 space-y-0.5">
-                                        <p class="font-semibold truncate">
-                                            {{ request.title }}
-                                        </p>
-                                        <p class="text-sm text-muted-foreground">
-                                            {{ formatDate(request.service_date) }}
-                                            · {{ formatTime(request.start_time) }}
-                                            - {{ formatTime(request.end_time) }}
-                                        </p>
-                                        <p class="text-xs text-muted-foreground">
-                                            {{ request.shop_location?.shop?.name }}
-                                            · {{ request.shop_location?.city }}, {{ request.shop_location?.state }}
-                                        </p>
-                                    </div>
-                                    <div class="flex flex-col items-end gap-1 shrink-0">
-                                        <span class="font-bold text-primary">{{ formatCurrency(request.price) }}</span>
-                                        <Link href="/provider/available-requests">
-                                            <Button variant="ghost" size="sm">View All</Button>
-                                        </Link>
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-base font-semibold tracking-[-0.02em]">
+                                                {{ request.title }}
+                                            </p>
+                                            <p class="mt-1 text-sm text-muted-foreground">
+                                                {{ formatDate(request.service_date) }}
+                                                <template v-if="request.start_time">
+                                                    · {{ formatTime(request.start_time) }} - {{ formatTime(request.end_time) }}
+                                                </template>
+                                            </p>
+                                            <p class="mt-1 text-xs text-muted-foreground">
+                                                {{ request.shop_location?.shop?.name }}
+                                                <template v-if="request.shop_location?.city">
+                                                    · {{ request.shop_location?.city }}, {{ request.shop_location?.state }}
+                                                </template>
+                                            </p>
+                                        </div>
+                                        <div class="shrink-0 text-right">
+                                            <p class="text-lg font-semibold tracking-[-0.03em] text-primary">
+                                                {{ formatCurrency(request.price) }}
+                                            </p>
+                                            <Link href="/provider/available-requests">
+                                                <Button variant="ghost" size="sm" class="mt-2">Open</Button>
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <p v-else class="py-8 text-center text-sm text-muted-foreground">No available requests</p>
-                            <div class="pt-4 border-t mt-4">
-                                <Button as="a" href="/provider/available-requests" variant="outline" class="w-full">
-                                    Browse All Requests
-                                </Button>
-                            </div>
+                            <p v-else class="py-10 text-center text-sm text-muted-foreground">
+                                No available requests right now.
+                            </p>
                         </CardContent>
                     </Card>
+
+                    <div class="grid gap-5">
+                        <Card>
+                            <CardHeader class="px-6 pb-0">
+                                <CardTitle class="text-2xl tracking-[-0.04em]">Performance</CardTitle>
+                                <CardDescription>Progress at a glance</CardDescription>
+                            </CardHeader>
+                            <CardContent class="grid gap-3 px-6 sm:grid-cols-2">
+                                <div class="ios-panel px-4 py-4">
+                                    <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">This month</p>
+                                    <p class="mt-2 text-xl font-semibold tracking-[-0.03em]">
+                                        {{ formatCurrency(providerStats().earnings_this_month) }}
+                                    </p>
+                                </div>
+                                <div class="ios-panel px-4 py-4">
+                                    <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">All time</p>
+                                    <p class="mt-2 text-xl font-semibold tracking-[-0.03em]">
+                                        {{ formatCurrency(providerStats().total_earnings) }}
+                                    </p>
+                                </div>
+                                <div class="ios-panel px-4 py-4">
+                                    <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Completed</p>
+                                    <p class="mt-2 text-xl font-semibold tracking-[-0.03em]">
+                                        {{ providerStats().completed_bookings }}
+                                    </p>
+                                </div>
+                                <div class="ios-panel px-4 py-4">
+                                    <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Status</p>
+                                    <p class="mt-2 text-xl font-semibold tracking-[-0.03em]">
+                                        Ready to accept
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </section>
             </template>
 
-            <!-- ════════════════════════════════════════ SHOP VIEW ═══════ -->
             <template v-else-if="view === 'shop'">
-                <div class="space-y-2">
-                    <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Shop Dashboard</h1>
-                    <p class="text-sm text-muted-foreground">Overview of your service requests and bookings</p>
-                </div>
+                <section class="ios-surface overflow-hidden px-5 py-6 md:px-7">
+                    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                        <div class="space-y-3">
+                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                                Shop dashboard
+                            </p>
+                            <div>
+                                <h1 class="text-3xl font-semibold tracking-[-0.05em] md:text-4xl">
+                                    Requests, bookings, and spend in one clean view.
+                                </h1>
+                                <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
+                                    Post work quickly, watch coverage progress, and keep active operations readable at a glance.
+                                </p>
+                            </div>
+                        </div>
 
-                <!-- Stats -->
-                <div class="grid gap-4 md:grid-cols-3">
-                    <Card class="border-primary/30">
-                        <CardHeader class="pb-2">
-                            <CardDescription>Active Requests</CardDescription>
-                            <CardTitle class="text-3xl text-primary">{{ shopStats().active_requests }}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-xs text-muted-foreground">Open service requests</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader class="pb-2">
-                            <CardDescription>Upcoming Bookings</CardDescription>
-                            <CardTitle class="text-3xl">{{ shopStats().upcoming_bookings }}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-xs text-muted-foreground">Next 7 days</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader class="pb-2">
-                            <CardDescription>Total Spent</CardDescription>
-                            <CardTitle class="text-3xl">{{ formatCurrency(shopStats().total_spent) }}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-xs text-muted-foreground">All time</p>
-                        </CardContent>
-                    </Card>
-                </div>
+                        <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[26rem]">
+                            <div class="ios-panel px-4 py-4">
+                                <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Active requests</p>
+                                <p class="mt-2 text-2xl font-semibold tracking-[-0.04em] text-primary">
+                                    {{ shopStats().active_requests }}
+                                </p>
+                            </div>
+                            <div class="ios-panel px-4 py-4">
+                                <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Upcoming</p>
+                                <p class="mt-2 text-2xl font-semibold tracking-[-0.04em]">
+                                    {{ shopStats().upcoming_bookings }}
+                                </p>
+                            </div>
+                            <div class="ios-panel px-4 py-4">
+                                <p class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total spend</p>
+                                <p class="mt-2 text-2xl font-semibold tracking-[-0.04em]">
+                                    {{ formatCurrency(shopStats().total_spent) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                <!-- Quick Actions -->
-                <div class="flex flex-wrap gap-3">
-                    <Button as="a" href="/shop/service-requests/create">+ Create Request</Button>
-                    <Button as="a" href="/shop/service-requests" variant="outline">All Requests</Button>
+                <section class="flex flex-wrap gap-3">
+                    <Button as="a" href="/shop/service-requests/create">Create request</Button>
+                    <Button as="a" href="/shop/service-requests" variant="outline">All requests</Button>
                     <Button as="a" href="/shop/bookings" variant="outline">Bookings</Button>
-                </div>
+                </section>
 
-                <!-- Two columns -->
-                <div class="grid gap-4 lg:grid-cols-2">
-                    <!-- Recent Requests -->
+                <section class="grid gap-5 lg:grid-cols-2">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Recent Service Requests</CardTitle>
-                            <CardDescription>Your last 5 requests</CardDescription>
+                        <CardHeader class="px-6 pb-0">
+                            <CardTitle class="text-2xl tracking-[-0.04em]">Recent service requests</CardTitle>
+                            <CardDescription>Your latest posted work</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div v-if="recent_requests.length > 0" class="divide-y">
+                        <CardContent class="px-6">
+                            <div v-if="recent_requests.length > 0" class="space-y-3">
                                 <div
                                     v-for="request in recent_requests"
                                     :key="request.id"
-                                    class="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                                    class="rounded-[22px] border border-white/50 bg-white/62 p-4 backdrop-blur-md dark:border-white/8 dark:bg-white/6"
                                 >
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-medium text-sm truncate">{{ request.title }}</p>
-                                        <p class="text-xs text-muted-foreground">
-                                            {{ formatDate(request.service_date) }}
-                                            · {{ formatTime(request.start_time) }}
-                                        </p>
-                                    </div>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <Badge :variant="request.status_variant">{{ request.status_label }}</Badge>
-                                        <Link :href="`/shop/service-requests/${request.id}`">
-                                            <Button variant="ghost" size="sm">View</Button>
-                                        </Link>
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-base font-semibold tracking-[-0.02em]">{{ request.title }}</p>
+                                            <p class="mt-1 text-sm text-muted-foreground">
+                                                {{ formatDate(request.service_date) }}
+                                                <template v-if="request.start_time">
+                                                    · {{ formatTime(request.start_time) }}
+                                                </template>
+                                            </p>
+                                        </div>
+                                        <div class="shrink-0 text-right">
+                                            <Badge :variant="request.status_variant">{{ request.status_label }}</Badge>
+                                            <div class="mt-2">
+                                                <Link :href="`/shop/service-requests/${request.id}`">
+                                                    <Button variant="ghost" size="sm">Open</Button>
+                                                </Link>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <p v-else class="py-8 text-center text-sm text-muted-foreground">No service requests yet</p>
-                            <div class="pt-4 border-t mt-4">
-                                <Button as="a" href="/shop/service-requests" variant="outline" class="w-full">
-                                    View All Requests
-                                </Button>
-                            </div>
+                            <p v-else class="py-10 text-center text-sm text-muted-foreground">
+                                No service requests yet.
+                            </p>
                         </CardContent>
                     </Card>
 
-                    <!-- Upcoming Bookings -->
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Upcoming Bookings</CardTitle>
-                            <CardDescription>Next 7 days</CardDescription>
+                        <CardHeader class="px-6 pb-0">
+                            <CardTitle class="text-2xl tracking-[-0.04em]">Upcoming bookings</CardTitle>
+                            <CardDescription>Next scheduled coverage</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div v-if="upcoming_bookings.length > 0" class="divide-y">
+                        <CardContent class="px-6">
+                            <div v-if="upcoming_bookings.length > 0" class="space-y-3">
                                 <div
                                     v-for="booking in upcoming_bookings"
                                     :key="booking.id"
-                                    class="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                                    class="rounded-[22px] border border-white/50 bg-white/62 p-4 backdrop-blur-md dark:border-white/8 dark:bg-white/6"
                                 >
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-medium text-sm truncate">
-                                            {{ booking.service_request?.title || 'Service' }}
-                                        </p>
-                                        <p class="text-xs text-muted-foreground">
-                                            {{ formatDate(booking.service_request?.service_date || '') }}
-                                        </p>
-                                        <p v-if="booking.provider" class="text-xs text-muted-foreground">
-                                            Provider: {{ booking.provider.user?.name ?? '—' }}
-                                        </p>
-                                    </div>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <Badge :variant="booking.status_variant">{{ booking.status_label }}</Badge>
-                                        <Link :href="`/shop/bookings/${booking.id}`">
-                                            <Button variant="ghost" size="sm">View</Button>
-                                        </Link>
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-base font-semibold tracking-[-0.02em]">
+                                                {{ booking.service_request?.title || 'Service booking' }}
+                                            </p>
+                                            <p class="mt-1 text-sm text-muted-foreground">
+                                                {{ formatDate(booking.service_request?.service_date || '') }}
+                                            </p>
+                                            <p v-if="booking.provider" class="mt-1 text-xs text-muted-foreground">
+                                                Provider: {{ booking.provider.user?.name ?? '—' }}
+                                            </p>
+                                        </div>
+                                        <div class="shrink-0 text-right">
+                                            <Badge :variant="booking.status_variant">{{ booking.status_label }}</Badge>
+                                            <div class="mt-2">
+                                                <Link :href="`/shop/bookings/${booking.id}`">
+                                                    <Button variant="ghost" size="sm">Open</Button>
+                                                </Link>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <p v-else class="py-8 text-center text-sm text-muted-foreground">No upcoming bookings</p>
-                            <div class="pt-4 border-t mt-4">
-                                <Button as="a" href="/shop/bookings" variant="outline" class="w-full">
-                                    View All Bookings
-                                </Button>
-                            </div>
+                            <p v-else class="py-10 text-center text-sm text-muted-foreground">
+                                No upcoming bookings.
+                            </p>
                         </CardContent>
                     </Card>
-                </div>
+                </section>
             </template>
 
-            <!-- ══════════════════════════════════════ DEFAULT VIEW ═══════ -->
             <template v-else>
-                <div class="space-y-2">
-                    <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Dashboard</h1>
-                    <p class="text-sm text-muted-foreground">Welcome! Your account is set up and ready.</p>
-                </div>
+                <section class="ios-surface px-6 py-8 md:px-8">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                        Dashboard
+                    </p>
+                    <h1 class="mt-3 text-3xl font-semibold tracking-[-0.05em] md:text-4xl">
+                        Your account is ready.
+                    </h1>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
+                        Complete your profile to unlock the full marketplace workflow and role-specific tools.
+                    </p>
+                </section>
             </template>
-
         </div>
     </AppLayout>
 </template>

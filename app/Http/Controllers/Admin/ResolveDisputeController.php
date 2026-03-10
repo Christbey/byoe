@@ -12,13 +12,21 @@ class ResolveDisputeController extends Controller
     public function __invoke(Request $request, Dispute $dispute): RedirectResponse
     {
         $validated = $request->validate([
-            'notes' => ['required', 'string', 'max:2000'],
-            'status' => ['required', 'in:resolved,closed'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'status' => ['required', 'in:under_review,resolved,closed'],
         ]);
 
-        if ($validated['status'] === 'resolved') {
+        if ($validated['status'] === 'under_review') {
+            $dispute->markAsUnderReview();
+        } elseif ($validated['status'] === 'resolved') {
+            $request->validate([
+                'notes' => ['required', 'string', 'max:2000'],
+            ]);
             $dispute->resolve($request->user(), $validated['notes']);
         } else {
+            $request->validate([
+                'notes' => ['required', 'string', 'max:2000'],
+            ]);
             $dispute->update([
                 'status' => 'closed',
                 'resolution_notes' => $validated['notes'],

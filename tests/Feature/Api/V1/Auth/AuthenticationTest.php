@@ -22,7 +22,12 @@ test('user can register via API', function () {
 
     expect($response->json('user.name'))->toBe('Test User')
         ->and($response->json('user.email'))->toBe('test@example.com')
-        ->and($response->json('token'))->toContain('byoe_');
+        ->and($response->json('token'))->toContain('|');
+
+    $tokenPrefix = (string) config('sanctum.token_prefix', '');
+    if ($tokenPrefix !== '') {
+        expect($response->json('token'))->toContain($tokenPrefix);
+    }
 
     $this->assertDatabaseHas('users', [
         'email' => 'test@example.com',

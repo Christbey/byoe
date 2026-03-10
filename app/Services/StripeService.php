@@ -245,7 +245,7 @@ class StripeService
         if ($shop->stripe_customer_id) {
             // Verify customer still exists in Stripe
             try {
-                \Stripe\Customer::retrieve($shop->stripe_customer_id);
+                $this->retrieveStripeCustomer($shop->stripe_customer_id);
 
                 return $shop->stripe_customer_id;
             } catch (ApiErrorException $e) {
@@ -260,7 +260,7 @@ class StripeService
         }
 
         try {
-            $customer = \Stripe\Customer::create([
+            $customer = $this->createStripeCustomer([
                 'email' => $shop->user->email,
                 'name' => $shop->name,
                 'metadata' => [
@@ -284,6 +284,24 @@ class StripeService
             ]);
             throw new \Exception('Failed to create Stripe Customer: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Wrapper around Stripe customer retrieval to allow test doubles without alias mocks.
+     */
+    protected function retrieveStripeCustomer(string $customerId): mixed
+    {
+        return \Stripe\Customer::retrieve($customerId);
+    }
+
+    /**
+     * Wrapper around Stripe customer creation to allow test doubles without alias mocks.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    protected function createStripeCustomer(array $payload): mixed
+    {
+        return \Stripe\Customer::create($payload);
     }
 
     /**

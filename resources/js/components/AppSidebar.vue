@@ -12,6 +12,7 @@ import {
     TrendingUp,
     User,
     Users,
+    UserCheck,
 } from 'lucide-vue-next';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -106,6 +107,11 @@ const mainNavItems = computed<NavItem[]>(() => {
                 icon: ShieldAlert,
             },
             {
+                title: 'Provider Trust',
+                href: '/admin/providers',
+                icon: UserCheck,
+            },
+            {
                 title: 'Users',
                 href: '/admin/users',
                 icon: Users,
@@ -136,10 +142,14 @@ const footerNavItems: NavItem[] = [];
 
 <template>
     <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader>
+        <SidebarHeader class="pt-safe px-3 pt-4">
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
+                    <SidebarMenuButton
+                        size="lg"
+                        as-child
+                        class="ios-panel h-14 rounded-[22px] border-white/50 px-3 dark:border-white/8"
+                    >
                         <Link :href="dashboard()">
                             <AppLogo />
                         </Link>
@@ -148,11 +158,11 @@ const footerNavItems: NavItem[] = [];
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent class="px-3 pb-2">
             <NavMain :items="mainNavItems" />
         </SidebarContent>
 
-        <SidebarFooter>
+        <SidebarFooter class="px-3 pb-safe pb-4">
             <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>

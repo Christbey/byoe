@@ -25,3 +25,4 @@ Schedule::command('emails:send-upcoming-booking-reminders')->dailyAt('18:00')->n
 Schedule::command('emails:send-booking-completion-reminders')->dailyAt('10:00')->name('booking-completion-reminders');
 Schedule::command('emails:send-weekly-summaries')->weekly()->mondays()->at('08:00')->name('weekly-summaries');
 Schedule::command('emails:send-request-expiring-alerts')->everyThreeHours()->name('request-expiring-alerts');
+Schedule::command('emails:send-provider-risk-alerts')->dailyAt('08:30')->name('provider-risk-alerts');

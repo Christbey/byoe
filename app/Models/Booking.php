@@ -13,6 +13,33 @@ class Booking extends Model
     /** @use HasFactory<\Database\Factories\BookingFactory> */
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::saved(function (Booking $booking): void {
+            if (! $booking->wasRecentlyCreated && ! $booking->wasChanged(['provider_id', 'status', 'cancellation_reason'])) {
+                return;
+            }
+
+            $providerIds = array_filter([
+                $booking->provider_id,
+                $booking->getOriginal('provider_id'),
+            ]);
+
+            Provider::query()
+                ->whereIn('id', array_unique($providerIds))
+                ->get()
+                ->each(fn (Provider $provider) => $provider->refreshTrustMetrics());
+        });
+
+        static::deleted(function (Booking $booking): void {
+            if (! $booking->provider_id) {
+                return;
+            }
+
+            $booking->provider?->refreshTrustMetrics();
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *

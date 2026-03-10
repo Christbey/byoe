@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\Payout;
 use App\Models\Provider;
 use App\Models\ServiceRequest;
+use Carbon\Carbon;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -185,15 +186,8 @@ class BookingService
                 throw new \Exception('Cannot complete a cancelled booking');
             }
 
-            // Update booking status
-            $booking->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]);
-
-            // Increment provider's completed bookings count
+            $booking->complete();
             $provider = $booking->provider;
-            $provider->increment('completed_bookings');
 
             DB::commit();
 
@@ -247,7 +241,19 @@ class BookingService
             }
 
             $serviceRequest = $booking->serviceRequest;
-            $serviceDate = $serviceRequest->service_date;
+            $serviceDate = $serviceRequest->service_date
+                ? Carbon::parse($serviceRequest->service_date)
+                : Carbon::parse($serviceRequest->getRawOriginal('service_date'));
+
+            if ($serviceRequest->start_time) {
+                $serviceStartTime = Carbon::parse((string) $serviceRequest->start_time);
+                $serviceDate->setTime(
+                    $serviceStartTime->hour,
+                    $serviceStartTime->minute,
+                    $serviceStartTime->second,
+                );
+            }
+
             $hoursUntilService = now()->diffInHours($serviceDate, false);
 
             // Determine refund amount based on cancellation policy

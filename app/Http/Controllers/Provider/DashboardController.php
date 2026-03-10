@@ -24,6 +24,9 @@ class DashboardController extends Controller
                 ->with('info', 'Please complete your provider profile to get started.');
         }
 
+        $provider->refreshTrustMetrics();
+        $provider->load('stripeAccount');
+
         // Earnings calculations
         $earningsThisWeek = Payout::where('provider_id', $provider->id)
             ->where('status', 'paid')
@@ -50,6 +53,14 @@ class DashboardController extends Controller
             ->get();
 
         return Inertia::render('provider/Dashboard', [
+            'provider' => [
+                'id' => $provider->id,
+                'trust_score' => $provider->trust_score,
+                'reliability_score' => $provider->reliability_score,
+                'vetting_status' => $provider->vetting_status,
+                'trust_tier' => $provider->trust_tier,
+                'trust_action_items' => $provider->trustActionItems(),
+            ],
             'earnings' => [
                 'this_week' => $earningsThisWeek,
                 'this_month' => $earningsThisMonth,

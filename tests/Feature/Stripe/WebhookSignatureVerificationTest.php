@@ -5,8 +5,6 @@ use App\Models\Payment;
 use App\Models\Provider;
 use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\Log;
-use Stripe\Event;
-use Stripe\Webhook;
 
 uses()->group('stripe', 'webhook');
 
@@ -28,14 +26,16 @@ test('webhook with valid signature is processed', function () {
     // Mock Stripe webhook signature verification
     $payload = json_encode([
         'id' => 'evt_test123',
+        'object' => 'event',
         'type' => 'payment_intent.succeeded',
         'data' => [
             'object' => [
                 'id' => 'pi_test123',
+                'object' => 'payment_intent',
                 'payment_method_types' => ['card'],
             ],
         ],
-    ]);
+    ], JSON_THROW_ON_ERROR);
 
     $secret = config('stripe.webhook_secret');
     config(['stripe.webhook_secret' => 'whsec_test_secret']);
@@ -47,7 +47,7 @@ test('webhook with valid signature is processed', function () {
     $sigHeader = "t={$timestamp},v1={$signature}";
 
     // Send webhook request
-    $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true), [
+    $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true, 512, JSON_THROW_ON_ERROR), [
         'Stripe-Signature' => $sigHeader,
     ]);
 
@@ -63,18 +63,20 @@ test('webhook with invalid signature is rejected', function () {
 
     $payload = json_encode([
         'id' => 'evt_test123',
+        'object' => 'event',
         'type' => 'payment_intent.succeeded',
         'data' => [
             'object' => [
                 'id' => 'pi_test123',
+                'object' => 'payment_intent',
             ],
         ],
-    ]);
+    ], JSON_THROW_ON_ERROR);
 
     // Invalid signature
     $sigHeader = 't='.time().',v1=invalid_signature_hash';
 
-    $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true), [
+    $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true, 512, JSON_THROW_ON_ERROR), [
         'Stripe-Signature' => $sigHeader,
     ]);
 
@@ -85,18 +87,20 @@ test('webhook with invalid signature is rejected', function () {
 test('webhook without signature is rejected', function () {
     config(['stripe.webhook_secret' => 'whsec_test_secret']);
 
-    $payload = [
+    $payload = json_encode([
         'id' => 'evt_test123',
+        'object' => 'event',
         'type' => 'payment_intent.succeeded',
         'data' => [
             'object' => [
                 'id' => 'pi_test123',
+                'object' => 'payment_intent',
             ],
         ],
-    ];
+    ], JSON_THROW_ON_ERROR);
 
     // No Stripe-Signature header
-    $response = $this->postJson('/api/stripe/webhook', $payload);
+    $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true, 512, JSON_THROW_ON_ERROR));
 
     $response->assertStatus(400);
 });
@@ -106,13 +110,15 @@ test('unhandled webhook event is logged', function () {
 
     $payload = json_encode([
         'id' => 'evt_test123',
+        'object' => 'event',
         'type' => 'customer.created',
         'data' => [
             'object' => [
                 'id' => 'cus_test123',
+                'object' => 'customer',
             ],
         ],
-    ]);
+    ], JSON_THROW_ON_ERROR);
 
     config(['stripe.webhook_secret' => 'whsec_test_secret']);
 
@@ -122,7 +128,7 @@ test('unhandled webhook event is logged', function () {
     $signature = hash_hmac('sha256', $signedPayload, 'whsec_test_secret');
     $sigHeader = "t={$timestamp},v1={$signature}";
 
-    $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true), [
+    $response = $this->postJson('/api/stripe/webhook', json_decode($payload, true, 512, JSON_THROW_ON_ERROR), [
         'Stripe-Signature' => $sigHeader,
     ]);
 
