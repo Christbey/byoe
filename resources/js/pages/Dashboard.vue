@@ -11,6 +11,7 @@ import CardContent from '@/components/ui/card/CardContent.vue';
 import { Button } from '@/components/ui/button';
 import Badge from '@/components/ui/badge/Badge.vue';
 import { dashboard } from '@/routes';
+import PageHelp from '@/components/marketplace/PageHelp.vue';
 
 interface ProviderStats {
     earnings_this_month: number;
@@ -87,6 +88,15 @@ const shopStats = () => props.stats as ShopStats;
                                     See open requests, monitor upcoming work, and keep earnings visible without digging through menus.
                                 </p>
                             </div>
+                            <PageHelp
+                                storage-key="root-provider-dashboard"
+                                :steps="[
+                                    'This dashboard is your operating home base: browse requests, track bookings, and monitor earnings.',
+                                    'A request becomes a booking after you accept it and the booking is confirmed.',
+                                    'Completed shifts flow into ratings and payouts, so the booking page stays the source of truth.',
+                                    'If anything feels unclear, use the booking details page rather than guessing from status labels alone.',
+                                ]"
+                            />
                         </div>
 
                         <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[26rem]">
@@ -218,6 +228,15 @@ const shopStats = () => props.stats as ShopStats;
                                     Post work quickly, watch coverage progress, and keep active operations readable at a glance.
                                 </p>
                             </div>
+                            <PageHelp
+                                storage-key="root-shop-dashboard"
+                                :steps="[
+                                    'Create a service request when you need shift coverage at a specific location and time.',
+                                    'When a provider accepts it, the request becomes a booking with clearer status tracking.',
+                                    'Use the booking page to confirm completion, rate the provider, or open a dispute if needed.',
+                                    'Think of this dashboard as your live board for open work, confirmed coverage, and spend.',
+                                ]"
+                            />
                         </div>
 
                         <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[26rem]">
